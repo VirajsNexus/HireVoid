@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireVoid - AI Resume Intelligence Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="background-elements">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <h1>HireVoid</h1>
+                <p class="tagline">AI-Powered Career Intelligence</p>
+            </div>
+        </div>
+        <div class="header-badge">
+            <span class="badge-dot"></span>
+            <span>Powered by Gemini AI</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('match', event)" data-icon="📊">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Match Analysis</span>
+        </div>
+        <div class="tab" onclick="switchTab('linkedin', event)" data-icon="💼">
+            <span class="tab-icon">💼</span>
+            <span class="tab-label">LinkedIn Jobs</span>
+        </div>
+        <div class="tab" onclick="switchTab('resume', event)" data-icon="📝">
+            <span class="tab-icon">📝</span>
+            <span class="tab-label">Resume Review</span>
+        </div>
+        <div class="tab" onclick="switchTab('jd', event)" data-icon="🎯">
+            <span class="tab-icon">🎯</span>
+            <span class="tab-label">Analyze JD</span>
+        </div>
+    </div>
+
+    <!-- Match Analysis Tab -->
+    <div id="match-tab" class="tab-content active">
+        <div class="section-header">
+            <h2>Resume vs Job Description Analysis</h2>
+            <p>Upload your resume and paste a job description to see how well you match</p>
+        </div>
+        
+        <div class="grid-2">
+            <div class="input-card">
+                <div class="card-header">
+                    <span class="card-icon">📄</span>
+                    <h3>Your Resume</h3>
+                </div>
+                <div class="upload-zone">
+                    <input type="file" class="pdf-upload" data-target="resume-match" accept=".pdf" id="resume-upload-match">
+                    <label for="resume-upload-match" class="upload-label">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <path d="M7 18C4.23858 18 2 15.7614 2 13C2 10.2386 4.23858 8 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8C19.7614 8 22 10.2386 22 13C22 15.7614 19.7614 18 17 18H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12V20M12 12L9 15M12 12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="upload-text">Drop PDF or click to upload</span>
+                        <span class="upload-hint">PDF format supported</span>
+                    </label>
+                </div>
+                <textarea id="resume-match" placeholder="Extracted resume text will appear here..."></textarea>
+            </div>
+            
+            <div class="input-card">
+                <div class="card-header">
+                    <span class="card-icon">💼</span>
+                    <h3>Job Description</h3>
+                </div>
+                <textarea id="jd-match" placeholder="Paste the complete job description here...
+
+Include:
+• Job title and company
+• Key responsibilities
+• Required skills and qualifications
+• Nice-to-have skills
+• Experience requirements"></textarea>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="analyzeMatch()">
+            <span class="btn-icon">🔍</span>
+            <span>Analyze Match</span>
+            <span class="btn-shine"></span>
+        </button>
+        
+        <div id="loading-match" class="loading">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Analyzing with AI...</p>
+                <p class="loading-subtext">This may take a few seconds</p>
+            </div>
+        </div>
+        
+        <div id="results-match" class="results">
+            <div class="score-hero">
+                <div class="score-circle">
+                    <svg class="score-ring" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#e0e0e0" stroke-width="12"/>
+                        <circle id="score-progress" cx="100" cy="100" r="90" fill="none" stroke="url(#scoreGradient)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+                        <defs>
+                            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="score-content">
+                        <div class="score-number" id="score">0%</div>
+                        <div class="score-label">Match Score</div>
+                    </div>
+                </div>
+                <div class="score-details">
+                    <h3 id="verdict" class="verdict-text">Calculating...</h3>
+                    <p id="summary" class="summary-text"></p>
+                </div>
+            </div>
+
+            <div class="skills-section">
+                <div class="skills-card skills-matched-card">
+                    <div class="skills-header">
+                        <span class="skills-icon">✅</span>
+                        <h3>Matched Skills</h3>
+                    </div>
+                    <div class="skill-tags" id="matched-skills"></div>
+                </div>
+                
+                <div class="skills-card skills-missing-card">
+                    <div class="skills-header">
+                        <span class="skills-icon">⚠️</span>
+                        <h3>Skills to Develop</h3>
+                    </div>
+                    <div class="skill-tags" id="missing-skills"></div>
+                </div>
+            </div>
+
+            <div class="suggestions-section">
+                <h3 class="section-title">
+                    <span class="title-icon">💡</span>
+                    Actionable Recommendations
+                </h3>
+                <div id="suggestions" class="suggestions-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LinkedIn Jobs Tab -->
+    <div id="linkedin-tab" class="tab-content">
+        <div class="section-header">
+            <h2>Find Matching LinkedIn Jobs</h2>
+            <p>Upload your resume to discover jobs that match your profile</p>
+        </div>
+        
+        <div class="linkedin-input-section">
+            <div class="input-card">
+                <div class="card-header">
+                    <span class="card-icon">📄</span>
+                    <h3>Your Resume</h3>
+                </div>
+                <div class="upload-zone">
+                    <input type="file" class="pdf-upload" data-target="resume-linkedin" accept=".pdf" id="resume-upload-linkedin">
+                    <label for="resume-upload-linkedin" class="upload-label">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <path d="M7 18C4.23858 18 2 15.7614 2 13C2 10.2386 4.23858 8 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8C19.7614 8 22 10.2386 22 13C22 15.7614 19.7614 18 17 18H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12V20M12 12L9 15M12 12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="upload-text">Drop PDF or click to upload</span>
+                        <span class="upload-hint">PDF format supported</span>
+                    </label>
+                </div>
+                <textarea id="resume-linkedin" placeholder="Extracted resume text will appear here..."></textarea>
+            </div>
+            
+            <div class="linkedin-filters">
+                <div class="filter-group">
+                    <label>Location</label>
+                    <input type="text" id="linkedin-location" placeholder="e.g., United States, Remote" value="United States">
+                </div>
+                <div class="filter-group">
+                    <label>Experience Level</label>
+                    <select id="linkedin-experience">
+                        <option value="">All Levels</option>
+                        <option value="entry">Entry Level</option>
+                        <option value="associate">Associate</option>
+                        <option value="mid-senior">Mid-Senior Level</option>
+                        <option value="director">Director</option>
+                        <option value="executive">Executive</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Job Type</label>
+                    <select id="linkedin-jobtype">
+                        <option value="">All Types</option>
+                        <option value="full-time">Full-time</option>
+                        <option value="part-time">Part-time</option>
+                        <option value="contract">Contract</option>
+                        <option value="internship">Internship</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="findLinkedInJobs()">
+            <span class="btn-icon">🔍</span>
+            <span>Find Matching Jobs</span>
+            <span class="btn-shine"></span>
+        </button>
+        
+        <div id="loading-linkedin" class="loading">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Searching LinkedIn jobs...</p>
+                <p class="loading-subtext">Analyzing your profile and matching with opportunities</p>
+            </div>
+        </div>
+        
+        <div id="results-linkedin" class="results">
+            <div class="linkedin-summary" id="linkedin-summary"></div>
+            <div class="jobs-grid" id="jobs-grid"></div>
+        </div>
+    </div>
+
+    <!-- Resume Review Tab -->
+    <div id="resume-tab" class="tab-content">
+        <div class="section-header">
+            <h2>Comprehensive Resume Review</h2>
+            <p>Get detailed feedback and actionable improvements for your resume</p>
+        </div>
+        
+        <div class="input-card">
+            <div class="card-header">
+                <span class="card-icon">📄</span>
+                <h3>Upload Your Resume</h3>
+            </div>
+            <div class="upload-zone">
+                <input type="file" class="pdf-upload" data-target="resume-review" accept=".pdf" id="resume-upload-review">
+                <label for="resume-upload-review" class="upload-label">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 18C4.23858 18 2 15.7614 2 13C2 10.2386 4.23858 8 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8C19.7614 8 22 10.2386 22 13C22 15.7614 19.7614 18 17 18H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 12V20M12 12L9 15M12 12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="upload-text">Drop PDF or click to upload</span>
+                    <span class="upload-hint">PDF format supported</span>
+                </label>
+            </div>
+            <textarea id="resume-review" placeholder="Paste or upload your resume for comprehensive review..."></textarea>
+        </div>
+        
+        <button class="btn btn-primary" onclick="analyzeResume()">
+            <span class="btn-icon">📝</span>
+            <span>Review Resume</span>
+            <span class="btn-shine"></span>
+        </button>
+        
+        <div id="loading-resume" class="loading">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Analyzing your resume...</p>
+            </div>
+        </div>
+        
+        <div id="results-resume" class="results">
+            <div class="rating-display">
+                <div class="rating-circle">
+                    <div class="rating-number" id="rating">0</div>
+                    <div class="rating-max">/10</div>
+                </div>
+                <div class="rating-label">Overall Rating</div>
+            </div>
+            
+            <div class="resume-analysis">
+                <div class="analysis-card strengths-card">
+                    <h3>
+                        <span class="card-emoji">💪</span>
+                        Strengths
+                    </h3>
+                    <p id="strengths-text"></p>
+                </div>
+                
+                <div class="analysis-card improvements-card">
+                    <h3>
+                        <span class="card-emoji">🎯</span>
+                        Areas for Improvement
+                    </h3>
+                    <p id="improvements-text"></p>
+                </div>
+                
+                <div class="analysis-card skills-card">
+                    <h3>
+                        <span class="card-emoji">🛠️</span>
+                        Identified Skills
+                    </h3>
+                    <div class="skill-tags" id="resume-skills"></div>
+                </div>
+            </div>
+            
+            <div class="suggestions-section">
+                <h3 class="section-title">
+                    <span class="title-icon">💡</span>
+                    Recommendations
+                </h3>
+                <div id="resume-suggestions" class="suggestions-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JD Analysis Tab -->
+    <div id="jd-tab" class="tab-content">
+        <div class="section-header">
+            <h2>Job Description Analysis</h2>
+            <p>Understand what employers are really looking for</p>
+        </div>
+        
+        <div class="input-card">
+            <div class="card-header">
+                <span class="card-icon">💼</span>
+                <h3>Job Description</h3>
+            </div>
+            <textarea id="jd-analyze" placeholder="Paste the complete job description here...
+
+We'll analyze:
+• Required vs preferred skills
+• Key responsibilities
+• Hidden requirements
+• Interview preparation tips"></textarea>
+        </div>
+        
+        <button class="btn btn-primary" onclick="analyzeJD()">
+            <span class="btn-icon">🎯</span>
+            <span>Analyze Job Description</span>
+            <span class="btn-shine"></span>
+        </button>
+        
+        <div id="loading-jd" class="loading">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Analyzing job description...</p>
+            </div>
+        </div>
+        
+        <div id="results-jd" class="results">
+            <div class="jd-overview" id="overview"></div>
+            
+            <div class="jd-skills-section">
+                <div class="skills-card must-have-card">
+                    <div class="skills-header">
+                        <span class="skills-icon">⭐</span>
+                        <h3>Must-Have Skills</h3>
+                    </div>
+                    <div class="skill-tags" id="must-have-skills"></div>
+                </div>
+                
+                <div class="skills-card nice-to-have-card">
+                    <div class="skills-header">
+                        <span class="skills-icon">✨</span>
+                        <h3>Nice-to-Have Skills</h3>
+                    </div>
+                    <div class="skill-tags" id="nice-to-have-skills"></div>
+                </div>
+            </div>
+            
+            <div class="responsibilities-section">
+                <h3 class="section-title">
+                    <span class="title-icon">📋</span>
+                    Key Responsibilities
+                </h3>
+                <div id="responsibilities" class="responsibilities-grid"></div>
+            </div>
+            
+            <div class="suggestions-section">
+                <h3 class="section-title">
+                    <span class="title-icon">🎓</span>
+                    Preparation Tips
+                </h3>
+                <div id="preparation-tips" class="suggestions-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
