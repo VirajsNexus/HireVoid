@@ -1,6 +1,25 @@
-# Secrets
+# Environments
 .env
+.venv
+env/
+venv/
+ENV/
 
-# Python cache
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
