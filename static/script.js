@@ -270,18 +270,18 @@ async function analyzeJD() {
 // LINKEDIN JOB MATCHING
 // ============================================
 async function findLinkedInJobs() {
-    const resume = document.getElementById('resume-linkedin').value;
-    const location = document.getElementById('linkedin-location').value;
-    const experience = document.getElementById('linkedin-experience').value;
-    const jobType = document.getElementById('linkedin-jobtype').value;
+    // 1. Get current values from the UI
+    const resumeText = document.getElementById('resume-linkedin').value;
+    const location = document.getElementById('linkedin-location').value || 'India';
     
-    const loader = document.getElementById('loading-linkedin');
-    const resultDiv = document.getElementById('results-linkedin');
-
-    if (!resume) {
-        showNotification("Please provide your resume", "warning");
+    // Safety check: Don't call API if resume is empty
+    if (!resumeText || resumeText.length < 50) {
+        showNotification("Please upload or paste your resume first!", "warning");
         return;
     }
+
+    const loader = document.getElementById('loading-linkedin');
+    const resultDiv = document.getElementById('results-linkedin');
 
     loader.classList.add('show');
     resultDiv.classList.remove('show');
@@ -291,59 +291,43 @@ async function findLinkedInJobs() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                resume, 
-                location,
-                experience,
-                jobType
+                resume: resumeText, 
+                location: location 
             })
         });
 
-        // Get raw text first to avoid "Unexpected end of JSON" if server crashes
-        const text = await res.text(); 
-        if (!text) throw new Error("Server returned no data");
+        // Parse the JSON (Variable 'data' must match the keys used below)
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-        const data = JSON.parse(text);
-
-        if (!res.ok) throw new Error(data.error || "Server responded with error");
-
-        // Summary
-        const summary = document.getElementById('linkedin-summary');
-        summary.innerHTML = `
-            <h3 style="margin-bottom: 15px; font-size: 1.3rem; font-weight: 700;">🎯 Job Search Results</h3>
-            <p style="line-height: 1.8; font-size: 1.05rem;">${data.summary || ""}</p>
+        // 2. Inject Summary
+        document.getElementById('linkedin-summary').innerHTML = `
+            <h3>🎯 Results</h3>
+            <p>${data.summary}</p>
         `;
         
-        // Jobs Grid
+        // 3. Inject Jobs (Mapping data.jobs to your HTML template)
         const jobsGrid = document.getElementById('jobs-grid');
-        jobsGrid.innerHTML = (data.jobs || [])
-            .map((job, i) => `
-                <div class="job-card" style="animation: fadeIn 0.5s ease-out ${i * 0.1}s both">
-                    <div class="job-header">
-                        <div>
-                            <h3 class="job-title">${job.title}</h3>
-                            <div class="job-company">${job.company}</div>
-                        </div>
-                        <div class="job-match-badge job-match-${job.matchLevel || 'medium'}">
-                            ${job.matchScore}% Match
-                        </div>
-                    </div>
-                    <p class="job-description">${job.description}</p>
-                    <div class="job-skills">
-                        ${(job.requiredSkills || []).map(skill => `<span class="job-skill">${skill}</span>`).join('')}
-                    </div>
-                    <div class="job-footer">
-                        <span class="job-posted">${job.postedDate || 'Just now'}</span>
-                        <a href="${job.url}" target="_blank" class="job-link">View Job</a>
-                    </div>
+        jobsGrid.innerHTML = data.jobs.map((job, i) => `
+            <div class="job-card" style="animation-delay: ${i * 0.1}s">
+                <div class="job-header">
+                    <h4>${job.title}</h4>
+                    <span class="job-match-badge job-match-${job.matchLevel}">
+                        ${job.matchScore}% Match
+                    </span>
                 </div>
-            `).join('');
+                <p>${job.company}</p>
+                <div class="job-skills">
+                    ${job.requiredSkills.map(s => `<span class="job-skill">${s}</span>`).join('')}
+                </div>
+                <a href="${job.url}" target="_blank" class="job-link">Apply Now</a>
+            </div>
+        `).join('');
 
         resultDiv.classList.add('show');
-        showNotification("Found matches!", "success");
-        
+
     } catch (e) {
-        console.error("LinkedIn Job Fetch Error:", e);
-        showNotification("Job search failed: " + e.message, "error");
+        showNotification("Search Error: " + e.message, "error");
     } finally {
         loader.classList.remove('show');
     }
