@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+# On production, you can restrict CORS to your domain for better security
 CORS(app)
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -26,8 +27,8 @@ def get_groq_json(system_prompt, user_prompt):
         )
         return json.loads(completion.choices[0].message.content)
     except Exception as e:
-        print(f"Error: {e}")
-        return None
+        print(f"Error calling Groq: {e}")
+        return {"error": "AI processing failed"}
 
 @app.route('/')
 def index():
@@ -36,7 +37,6 @@ def index():
 @app.route('/api/analyze-resume', methods=['POST'])
 def analyze_resume():
     data = request.get_json()
-    # Define the structure clearly for the AI
     system = """
     Return a JSON object with:
     - 'rating': int (1-10)
@@ -46,7 +46,7 @@ def analyze_resume():
     - 'suggestions': array of objects, each with 'title', 'description', and 'type' (use 'success', 'warning', or 'info')
     """
     user = f"Resume Content: {data.get('resume')}"
-    return jsonify(get_groq_json(system, user)), 200
+    return jsonify(get_groq_json(system, user))
 
 @app.route('/api/analyze-match', methods=['POST'])
 def analyze_match():
@@ -61,63 +61,51 @@ def analyze_match():
     - 'suggestions': array of objects with 'title', 'description', and 'type'
     """
     user = f"Resume: {data.get('resume')}\nJD: {data.get('jd')}"
-    return jsonify(get_groq_json(system, user)), 200
+    return jsonify(get_groq_json(system, user))
 
 @app.route('/api/analyze-jd', methods=['POST'])
 def analyze_jd():
     data = request.get_json()
-    system = "Return keys: 'overview', 'mustHaveSkills', 'niceToHaveSkills', 'responsibilities', 'preparationTips'."
+    system = "Return JSON with keys: 'overview', 'mustHaveSkills', 'niceToHaveSkills', 'responsibilities' (array of objects with 'title', 'desc'), 'preparationTips' (array of objects)."
     user = f"JD: {data.get('jd')}"
-    return jsonify(get_groq_json(system, user)), 200
-
+    return jsonify(get_groq_json(system, user))
 
 @app.route('/api/find-linkedin-jobs', methods=['POST'])
 def find_linkedin_jobs():
     try:
-        # Get data from Frontend
         data = request.get_json()
         location = data.get('location', 'India')
         
-        # 1. Dynamic API Call using .env keys
         url = "https://jsearch.p.rapidapi.com/search"
         querystring = {"query": f"Software Engineer in {location}", "num_pages": "1"}
-        
         headers = {
-            "x-rapidapi-key": os.getenv("RAPIDAPI_KEY"), # No hardcoding
+            "x-rapidapi-key": os.getenv("RAPIDAPI_KEY"),
             "x-rapidapi-host": "jsearch.p.rapidapi.com"
         }
         
-        # Use a clear variable name: 'api_res'
         api_res = requests.get(url, headers=headers, params=querystring)
-        api_res.raise_for_status() # Check for errors
-        
+        api_res.raise_for_status()
         results = api_res.json().get('data', [])
 
-        # 2. Dynamic Mapping for script.js
         formatted_jobs = []
         for job in results[:6]:
             formatted_jobs.append({
                 "title": job.get('job_title', 'Role'),
                 "company": job.get('employer_name', 'N/A'),
-                "description": job.get('job_description', '')[:160] + "...",
                 "url": job.get('job_apply_link', '#'),
-                "matchScore": 85,  # You can replace this with your AI matching logic later
-                "matchLevel": "high",
-                "requiredSkills": job.get('job_required_skills', [])[:3],
-                "postedDate": "Recently"
+                "matchScore": 85,
+                "matchLevel": "high"
             })
 
-        # 3. Return the exact keys your JS is looking for
         return jsonify({
             "jobs": formatted_jobs,
             "summary": f"Found {len(formatted_jobs)} opportunities in {location}"
-        }), 200
-
+        })
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": "Failed to fetch jobs", "jobs": []}), 500
-    
+
 if __name__ == '__main__':
-    # Railway will provide the PORT, locally it defaults to 5000
+    # Important: Render/Railway will inject the PORT environment variable
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
