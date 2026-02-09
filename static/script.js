@@ -226,7 +226,7 @@ async function reviewResume() {
 }
 
 // ============================================
-// JOB DESCRIPTION ANALYSIS
+// JOB DESCRIPTION ANALYSIS - FIXED VERSION
 // ============================================
 async function analyzeJD() {
     const jd = document.getElementById('jd-analyze').value;
@@ -260,43 +260,108 @@ async function analyzeJD() {
         
         // Must-have skills
         const mustHaveSkills = document.getElementById('must-have-skills');
-        mustHaveSkills.innerHTML = (data.mustHaveSkills || [])
+        const mustHaveArray = Array.isArray(data.mustHaveSkills) ? data.mustHaveSkills : [];
+        mustHaveSkills.innerHTML = mustHaveArray
             .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
         // Nice-to-have skills
         const niceToHaveSkills = document.getElementById('nice-to-have-skills');
-        niceToHaveSkills.innerHTML = (data.niceToHaveSkills || [])
+        const niceToHaveArray = Array.isArray(data.niceToHaveSkills) ? data.niceToHaveSkills : [];
+        niceToHaveSkills.innerHTML = niceToHaveArray
             .map((s, i) => `<span class="skill-tag" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Responsibilities
+        // Responsibilities - FIXED VERSION
         const responsibilities = document.getElementById('responsibilities');
-        responsibilities.innerHTML = (data.responsibilities || [])
-            .map((r, i) => `
+        let responsibilitiesArray = [];
+        
+        // Handle different data formats
+        if (Array.isArray(data.responsibilities)) {
+            responsibilitiesArray = data.responsibilities;
+        } else if (typeof data.responsibilities === 'string') {
+            // If it's a string, split by newlines or bullet points
+            responsibilitiesArray = data.responsibilities
+                .split(/\n|•|-/)
+                .filter(r => r.trim())
+                .map(r => ({ title: r.trim(), description: '', emoji: '📌' }));
+        }
+        
+        // Render responsibilities with proper error handling
+        responsibilities.innerHTML = responsibilitiesArray.map((r, i) => {
+            // Handle both object and string formats
+            const title = typeof r === 'object' ? (r.title || r.name || '') : r;
+            const description = typeof r === 'object' ? (r.description || r.desc || '') : '';
+            const emoji = typeof r === 'object' ? (r.emoji || '📌') : '📌';
+            
+            return `
                 <div class="responsibility-card" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
-                    <div class="responsibility-emoji">${r.emoji || '📌'}</div>
+                    <div class="responsibility-emoji">${emoji}</div>
                     <div class="responsibility-content">
-                        <h4>${r.title}</h4>
-                        <p>${r.desc || r.description || ''}</p>
+                        <h4>${title}</h4>
+                        ${description ? `<p>${description}</p>` : ''}
                     </div>
                 </div>
-            `).join('');
+            `;
+        }).join('');
         
-        // Preparation tips
-        const prepTips = document.getElementById('preparation-tips');
-        prepTips.innerHTML = (data.preparationTips || [])
-            .map((s, i) => `
-                <div class="suggestion-card ${s.type}" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
-                    <b>${s.title}</b>
-                    <p>${s.description}</p>
+        // If no responsibilities found, show a message
+        if (responsibilitiesArray.length === 0) {
+            responsibilities.innerHTML = `
+                <div class="responsibility-card">
+                    <div class="responsibility-emoji">ℹ️</div>
+                    <div class="responsibility-content">
+                        <h4>No specific responsibilities extracted</h4>
+                        <p>The AI couldn't identify specific responsibilities from the job description.</p>
+                    </div>
                 </div>
-            `).join('');
+            `;
+        }
+        
+        // Preparation tips - FIXED VERSION
+        const prepTips = document.getElementById('preparation-tips');
+        let prepTipsArray = [];
+        
+        // Handle different data formats for preparation tips
+        if (Array.isArray(data.preparationTips)) {
+            prepTipsArray = data.preparationTips;
+        } else if (typeof data.preparationTips === 'string') {
+            // If it's a string, create a single tip object
+            prepTipsArray = [{ 
+                title: 'Preparation Tips', 
+                description: data.preparationTips,
+                type: 'info'
+            }];
+        }
+        
+        prepTips.innerHTML = prepTipsArray.map((s, i) => {
+            const title = typeof s === 'object' ? (s.title || 'Tip') : 'Tip';
+            const description = typeof s === 'object' ? (s.description || s) : s;
+            const type = typeof s === 'object' ? (s.type || 'info') : 'info';
+            
+            return `
+                <div class="suggestion-card ${type}" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
+                    <b>${title}</b>
+                    <p>${description}</p>
+                </div>
+            `;
+        }).join('');
+        
+        // If no prep tips found, show a message
+        if (prepTipsArray.length === 0) {
+            prepTips.innerHTML = `
+                <div class="suggestion-card info">
+                    <b>No specific preparation tips available</b>
+                    <p>Review the job requirements carefully and prepare examples from your experience that demonstrate the required skills.</p>
+                </div>
+            `;
+        }
 
         resultDiv.classList.add('show');
         showNotification("JD analysis complete!", "success");
         
     } catch (e) {
+        console.error('JD Analysis Error:', e);
         showNotification("Analysis failed: " + e.message, "error");
     } finally {
         loader.classList.remove('show');
