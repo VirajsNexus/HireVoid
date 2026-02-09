@@ -281,43 +281,124 @@ Include:
             <div class="section-header">
                 <h2 class="section-title">
                     <i class="fab fa-linkedin"></i>
-                    LinkedIn Job Recommendations
+                    Job Search
                 </h2>
-                <p class="section-description">Find the best job matches based on your resume</p>
+                <p class="section-description">Find jobs by role, location, and experience level - Works for ALL professions!</p>
             </div>
             
+            <!-- Job Search Filters -->
+            <div class="search-filters-grid">
+                <!-- Job Role -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <i class="fas fa-briefcase card-icon"></i>
+                        <h3 class="card-title">Job Role / Title</h3>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="job-role" 
+                        class="cyber-input" 
+                        placeholder="e.g., Software Engineer, Data Scientist, Marketing Manager, Nurse, Teacher, Accountant..."
+                    />
+                    <p class="input-hint">Enter any job title or profession you're looking for</p>
+                </div>
+                
+                <!-- Location -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marker-alt card-icon"></i>
+                        <h3 class="card-title">Location</h3>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="job-location" 
+                        class="cyber-input" 
+                        placeholder="e.g., New York, London, Remote, Bangalore, Tokyo..."
+                    />
+                    <p class="input-hint">Enter city, country, or "Remote"</p>
+                </div>
+                
+                <!-- Experience Level -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line card-icon"></i>
+                        <h3 class="card-title">Experience Level</h3>
+                    </div>
+                    <select id="experience-level" class="cyber-select">
+                        <option value="">All Levels</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Entry Level">Entry Level</option>
+                        <option value="Mid Level">Mid Level</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Director">Director</option>
+                        <option value="Executive">Executive</option>
+                    </select>
+                    <p class="input-hint">Select your experience level (optional)</p>
+                </div>
+            </div>
+            
+            <!-- Quick Filters -->
+            <div class="glass-card">
+                <div class="card-header">
+                    <i class="fas fa-filter card-icon"></i>
+                    <h3 class="card-title">Quick Filters (Optional)</h3>
+                </div>
+                <div class="quick-filters">
+                    <button class="filter-chip" onclick="applyQuickFilter('Remote')">
+                        <i class="fas fa-home"></i> Remote Only
+                    </button>
+                    <button class="filter-chip" onclick="applyQuickFilter('Full-time')">
+                        <i class="fas fa-briefcase"></i> Full-time
+                    </button>
+                    <button class="filter-chip" onclick="applyQuickFilter('Contract')">
+                        <i class="fas fa-file-contract"></i> Contract
+                    </button>
+                    <button class="filter-chip" onclick="applyQuickFilter('Part-time')">
+                        <i class="fas fa-clock"></i> Part-time
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Optional Resume Upload -->
             <div class="glass-card">
                 <div class="card-header">
                     <i class="fas fa-file-pdf card-icon"></i>
-                    <h3 class="card-title">Your Resume</h3>
+                    <h3 class="card-title">Your Resume (Optional)</h3>
                 </div>
+                <p class="section-description" style="margin-bottom: 1rem;">Upload your resume for better job matching and personalized recommendations</p>
                 <div class="upload-zone">
                     <input type="file" class="pdf-upload" data-target="resume-linkedin" accept=".pdf" id="resume-upload-linkedin">
                     <label for="resume-upload-linkedin" class="upload-label">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
                         <span class="upload-text">Drop PDF or click to upload</span>
-                        <span class="upload-hint">PDF format supported</span>
+                        <span class="upload-hint">Upload resume for better job matching (optional)</span>
                     </label>
                 </div>
-                <textarea id="resume-linkedin" class="cyber-textarea" placeholder="Extracted resume text will appear here..."></textarea>
+                <textarea id="resume-linkedin" class="cyber-textarea" placeholder="Or paste your resume text here for better job matching..."></textarea>
             </div>
             
+            <!-- Search Button -->
             <button class="cyber-btn primary" onclick="getLinkedInJobs()">
-                <i class="fab fa-linkedin btn-icon"></i>
-                <span>FIND MATCHING JOBS</span>
+                <i class="fas fa-search btn-icon"></i>
+                <span>SEARCH JOBS</span>
                 <div class="btn-glow"></div>
             </button>
             
+            <!-- Loading Animation -->
             <div id="loading-linkedin" class="loading-overlay">
                 <div class="loading-content">
                     <div class="loading-hexagon">
                         <div class="hexagon-spinner"></div>
                         <i class="fab fa-linkedin loading-brain"></i>
                     </div>
-                    <p class="loading-text">SEARCHING LINKEDIN...</p>
+                    <p class="loading-text">SEARCHING JOBS...</p>
+                    <p class="loading-subtext">Finding the best opportunities for you</p>
                 </div>
             </div>
             
+            <!-- Results Section -->
             <div id="results-linkedin" class="results-section">
                 <div id="linkedin-summary" class="linkedin-summary"></div>
                 <div id="jobs-container" class="jobs-grid"></div>
@@ -509,9 +590,9 @@ We'll analyze:
                         Why HireVoid?
                     </h3>
                     <p class="about-text">
-                        HireVoid was created to help job seekers navigate the complex hiring landscape with AI-powered insights. 
-                        In today's competitive job market, understanding how your resume matches job requirements is crucial. 
-                        This platform leverages Groq AI to provide instant, actionable feedback on your resume, 
+                        HireVoid was created to help job seekers across ALL professions navigate the complex hiring landscape with AI-powered insights. 
+                        Whether you're a software engineer, teacher, nurse, marketer, accountant, or any other professional,
+                        this platform leverages Groq AI to provide instant, actionable feedback on your resume, 
                         helping you optimize your applications and increase your chances of landing your dream job.
                     </p>
                 </div>
@@ -526,14 +607,14 @@ We'll analyze:
                             <div class="step-number">1</div>
                             <div class="step-content">
                                 <h4>Choose Your Analysis Type</h4>
-                                <p>Select from Match Analysis, LinkedIn Jobs, Resume Review, or JD Analysis tabs</p>
+                                <p>Select from Match Analysis, Job Search, Resume Review, or JD Analysis tabs</p>
                             </div>
                         </div>
                         <div class="usage-step">
                             <div class="step-number">2</div>
                             <div class="step-content">
-                                <h4>Upload Your Resume</h4>
-                                <p>Upload your PDF resume - the AI will extract and analyze the content</p>
+                                <h4>Enter Your Information</h4>
+                                <p>Upload your PDF resume or enter job details for any profession worldwide</p>
                             </div>
                         </div>
                         <div class="usage-step">
@@ -555,6 +636,10 @@ We'll analyze:
                 
                 <div class="about-features">
                     <div class="feature-item">
+                        <i class="fas fa-globe"></i>
+                        <span>All Professions</span>
+                    </div>
+                    <div class="feature-item">
                         <i class="fas fa-brain"></i>
                         <span>Powered by Groq AI</span>
                     </div>
@@ -565,10 +650,6 @@ We'll analyze:
                     <div class="feature-item">
                         <i class="fas fa-bolt"></i>
                         <span>Instant Results</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Actionable Insights</span>
                     </div>
                 </div>
             </div>
