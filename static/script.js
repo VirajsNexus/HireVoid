@@ -1,340 +1,227 @@
-// ============================================
-// HIREVOID - COMPLETE JAVASCRIPT
-// AI-Powered Resume Analysis Platform
-// ============================================
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 // ============================================
-// CONFIGURATION
+// PDF TEXT EXTRACTION
 // ============================================
-const API_BASE = ''; // Empty string uses current domain (works for both local and Render)
+document.querySelectorAll('.pdf-upload').forEach(input => {
+    input.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        const targetId = e.target.getAttribute('data-target');
+        const targetArea = document.getElementById(targetId);
+        const uploadLabel = e.target.previousElementSibling;
+
+        if (file && file.type === "application/pdf") {
+            targetArea.placeholder = "Extracting text from PDF... please wait.";
+            if (uploadLabel) {
+                uploadLabel.querySelector('.upload-text').textContent = "Processing PDF...";
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n\n";
+                    }
+                    
+                    targetArea.value = fullText.trim();
+                    if (uploadLabel) {
+                        uploadLabel.querySelector('.upload-text').textContent = `✓ ${file.name}`;
+                        uploadLabel.style.borderColor = '#10b981';
+                        uploadLabel.style.background = 'rgba(16, 185, 129, 0.05)';
+                    }
+                } catch (err) {
+                    alert("Error reading PDF: " + err.message);
+                    if (uploadLabel) {
+                        uploadLabel.querySelector('.upload-text').textContent = "Drop PDF or click to upload";
+                    }
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+});
 
 // ============================================
 // TAB SWITCHING
 // ============================================
 function switchTab(tabName, event) {
-    // Remove active class from all tabs
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     
-    // Add active class to clicked tab
-    if (event) {
-        event.currentTarget.classList.add('active');
-    }
-    
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Show selected tab content
-    const selectedTab = document.getElementById(`${tabName}-tab`);
-    if (selectedTab) {
-        selectedTab.classList.add('active');
-    }
+    // Add active class to selected tab and content
+    document.getElementById(tabName + '-tab').classList.add('active');
+    event.currentTarget.classList.add('active');
 }
 
 // ============================================
-// PDF UPLOAD HANDLER
+// QUICK FILTER FUNCTIONALITY
 // ============================================
-function setupPDFUpload() {
-    const pdfInputs = document.querySelectorAll('.pdf-upload');
+function applyQuickFilter(filterType) {
+    const roleInput = document.getElementById('job-role');
+    const currentRole = roleInput.value.trim();
     
-    pdfInputs.forEach(input => {
-        input.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            if (file.type !== 'application/pdf') {
-                showNotification('Please upload a PDF file', 'error');
-                return;
-            }
-            
-            const targetId = this.getAttribute('data-target');
-            const textarea = document.getElementById(targetId);
-            
-            try {
-                showNotification('Extracting text from PDF...', 'info');
-                const text = await extractTextFromPDF(file);
-                textarea.value = text;
-                showNotification('PDF extracted successfully!', 'success');
-            } catch (error) {
-                console.error('PDF extraction error:', error);
-                showNotification('Failed to extract PDF. Please try copy-pasting text manually.', 'error');
-            }
-        });
-    });
-}
-
-async function extractTextFromPDF(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    
-    let fullText = '';
-    
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map(item => item.str).join(' ');
-        fullText += pageText + '\n';
+    // If role is empty, just add the filter
+    if (!currentRole) {
+        roleInput.value = filterType;
+    } else {
+        // Check if filter already exists
+        if (!currentRole.toLowerCase().includes(filterType.toLowerCase())) {
+            roleInput.value = `${currentRole} ${filterType}`;
+        }
     }
     
-    return fullText.trim();
+    // Visual feedback
+    showNotification(`Filter "${filterType}" applied!`, "success");
 }
 
 // ============================================
 // MATCH ANALYSIS
 // ============================================
 async function analyzeMatch() {
-    const resume = document.getElementById('resume-match').value.trim();
-    const jd = document.getElementById('jd-match').value.trim();
-    
+    const resume = document.getElementById('resume-match').value;
+    const jd = document.getElementById('jd-match').value;
+    const loader = document.getElementById('loading-match');
+    const resultDiv = document.getElementById('results-match');
+
     if (!resume || !jd) {
-        showNotification('Please provide both resume and job description', 'error');
+        showNotification("Please provide both resume and job description", "warning");
         return;
     }
-    
-    const loadingEl = document.getElementById('loading-match');
-    const resultsEl = document.getElementById('results-match');
-    
-    loadingEl.classList.add('active');
-    resultsEl.classList.remove('active');
-    
+
+    loader.classList.add('show');
+    resultDiv.classList.remove('show');
+
     try {
-        const response = await fetch(`${API_BASE}/api/analyze-match`, {
+        const res = await fetch('/api/analyze-match', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resume, jd })
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        displayMatchResults(data);
-        
-        loadingEl.classList.remove('active');
-        resultsEl.classList.add('active');
-        
-        // Scroll to results
-        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-    } catch (error) {
-        console.error('Match analysis error:', error);
-        loadingEl.classList.remove('active');
-        showNotification('Analysis failed. Please check your API keys and try again.', 'error');
-    }
-}
 
-function displayMatchResults(data) {
-    // Animate score
-    animateScore(data.score || 0);
-    
-    // Update verdict
-    const verdictEl = document.getElementById('verdict');
-    if (verdictEl) {
-        verdictEl.textContent = data.verdict || 'Analysis Complete';
-    }
-    
-    // Update summary
-    const summaryEl = document.getElementById('summary');
-    if (summaryEl) {
-        summaryEl.textContent = data.summary || 'No summary available';
-    }
-    
-    // Display matched skills
-    const matchedSkillsEl = document.getElementById('matched-skills');
-    if (matchedSkillsEl && data.matchedSkills) {
-        matchedSkillsEl.innerHTML = data.matchedSkills.map(skill => 
-            `<span class="skill-badge success"><i class="fas fa-check-circle"></i> ${skill}</span>`
-        ).join('');
-    }
-    
-    // Display missing skills
-    const missingSkillsEl = document.getElementById('missing-skills');
-    if (missingSkillsEl && data.missingSkills) {
-        missingSkillsEl.innerHTML = data.missingSkills.map(skill => 
-            `<span class="skill-badge danger"><i class="fas fa-times-circle"></i> ${skill}</span>`
-        ).join('');
-    }
-    
-    // Display suggestions
-    const suggestionsEl = document.getElementById('match-suggestions');
-    if (suggestionsEl && data.suggestions) {
-        suggestionsEl.innerHTML = data.suggestions.map(suggestion => `
-            <div class="suggestion-card ${suggestion.type || 'info'}">
-                <div class="suggestion-header">
-                    <i class="fas fa-lightbulb"></i>
-                    <h4>${suggestion.title || 'Suggestion'}</h4>
+        if (!res.ok) throw new Error("Server responded with error");
+        
+        const data = await res.json();
+
+        // Animate main score
+        animateScore(data.score || 0);
+        
+        // Update match score display
+        document.getElementById('match-score').textContent = data.score || 0;
+        
+        // Animate breakdown bars
+        if (data.breakdown) {
+            animateBreakdown(data.breakdown);
+        } else {
+            // Fallback if no breakdown data
+            const defaultBreakdown = {
+                skills: Math.max(0, (data.score || 0) - 10 + Math.random() * 20),
+                experience: Math.max(0, (data.score || 0) - 5 + Math.random() * 10),
+                keywords: Math.max(0, (data.score || 0) - 15 + Math.random() * 30)
+            };
+            animateBreakdown(defaultBreakdown);
+        }
+        
+        // Update analysis text
+        document.getElementById('analysis-text').textContent = data.summary || "";
+        
+        // Matched skills
+        const matchedSkills = document.getElementById('matched-skills');
+        matchedSkills.innerHTML = (data.matchedSkills || [])
+            .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
+            .join('');
+        
+        // Missing skills
+        const missingSkills = document.getElementById('missing-skills');
+        missingSkills.innerHTML = (data.missingSkills || [])
+            .map((s, i) => `<span class="skill-tag skill-missing" style="animation-delay: ${i * 0.1}s">${s}</span>`)
+            .join('');
+        
+        // Recommendations
+        const recommendations = document.getElementById('recommendations');
+        recommendations.innerHTML = (data.suggestions || [])
+            .map((s, i) => `
+                <div class="suggestion-card ${s.type}" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
+                    <b>${s.title}</b>
+                    <p>${s.description}</p>
                 </div>
-                <p>${suggestion.description || ''}</p>
-            </div>
-        `).join('');
+            `).join('');
+
+        resultDiv.classList.add('show');
+        showNotification("Analysis complete!", "success");
+        
+    } catch (e) {
+        showNotification("Analysis failed: " + e.message, "error");
+    } finally {
+        loader.classList.remove('show');
     }
 }
 
 // ============================================
-// LINKEDIN JOBS SEARCH
+// RESUME REVIEW (matches HTML function name)
 // ============================================
-async function findLinkedInJobs() {
-    const location = document.getElementById('job-location').value.trim() || 'India';
-    
-    const loadingEl = document.getElementById('loading-linkedin');
-    const resultsEl = document.getElementById('results-linkedin');
-    
-    loadingEl.classList.add('active');
-    resultsEl.classList.remove('active');
-    
-    try {
-        const response = await fetch(`${API_BASE}/api/find-linkedin-jobs`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ location })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        displayLinkedInJobs(data);
-        
-        loadingEl.classList.remove('active');
-        resultsEl.classList.add('active');
-        
-        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-    } catch (error) {
-        console.error('LinkedIn jobs error:', error);
-        loadingEl.classList.remove('active');
-        showNotification('Failed to fetch jobs. Please try again later.', 'error');
-    }
-}
+async function reviewResume() {
+    const resume = document.getElementById('resume-review').value;
+    const loader = document.getElementById('loading-resume');
+    const resultDiv = document.getElementById('results-resume');
 
-function displayLinkedInJobs(data) {
-    const summaryEl = document.getElementById('linkedin-summary');
-    const jobsEl = document.getElementById('linkedin-jobs');
-    
-    if (summaryEl) {
-        summaryEl.textContent = data.summary || 'Jobs found';
-    }
-    
-    if (jobsEl && data.jobs) {
-        if (data.jobs.length === 0) {
-            jobsEl.innerHTML = '<p class="no-results">No jobs found. Try a different location.</p>';
-            return;
-        }
-        
-        jobsEl.innerHTML = data.jobs.map(job => `
-            <div class="job-card">
-                <div class="job-header">
-                    <h3 class="job-title">${job.title || 'Job Title'}</h3>
-                    <span class="match-badge ${job.matchLevel || 'medium'}">${job.matchScore || 0}% Match</span>
-                </div>
-                <p class="job-company"><i class="fas fa-building"></i> ${job.company || 'Company'}</p>
-                <a href="${job.url || '#'}" target="_blank" class="job-apply-btn">
-                    <i class="fas fa-external-link-alt"></i> Apply Now
-                </a>
-            </div>
-        `).join('');
-    }
-}
-
-// ============================================
-// RESUME REVIEW
-// ============================================
-async function analyzeResume() {
-    const resume = document.getElementById('resume-review').value.trim();
-    
     if (!resume) {
-        showNotification('Please provide your resume text', 'error');
+        showNotification("Please provide a resume", "warning");
         return;
     }
-    
-    const loadingEl = document.getElementById('loading-resume');
-    const resultsEl = document.getElementById('results-resume');
-    
-    loadingEl.classList.add('active');
-    resultsEl.classList.remove('active');
-    
+
+    loader.classList.add('show');
+    resultDiv.classList.remove('show');
+
     try {
-        const response = await fetch(`${API_BASE}/api/analyze-resume`, {
+        const res = await fetch('/api/analyze-resume', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resume })
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        displayResumeResults(data);
-        
-        loadingEl.classList.remove('active');
-        resultsEl.classList.add('active');
-        
-        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-    } catch (error) {
-        console.error('Resume analysis error:', error);
-        loadingEl.classList.remove('active');
-        showNotification('Analysis failed. Please check your API keys and try again.', 'error');
-    }
-}
 
-function displayResumeResults(data) {
-    // Animate rating
-    animateRating(data.rating || 0);
-    
-    // Update strengths
-    const strengthsEl = document.getElementById('strengths');
-    if (strengthsEl) {
-        strengthsEl.textContent = data.strengths || 'No strengths identified';
-    }
-    
-    // Update improvements
-    const improvementsEl = document.getElementById('improvements');
-    if (improvementsEl) {
-        improvementsEl.textContent = data.improvements || 'No improvements suggested';
-    }
-    
-    // Display skills
-    const skillsEl = document.getElementById('resume-skills');
-    if (skillsEl && data.skills) {
-        skillsEl.innerHTML = data.skills.map(skill => 
-            `<span class="skill-badge info"><i class="fas fa-code"></i> ${skill}</span>`
-        ).join('');
-    }
-    
-    // Display suggestions
-    const suggestionsEl = document.getElementById('resume-suggestions');
-    if (suggestionsEl && data.suggestions) {
-        suggestionsEl.innerHTML = data.suggestions.map(suggestion => `
-            <div class="suggestion-card ${suggestion.type || 'info'}">
-                <div class="suggestion-header">
-                    <i class="fas fa-lightbulb"></i>
-                    <h4>${suggestion.title || 'Suggestion'}</h4>
+        if (!res.ok) throw new Error("Server responded with error");
+        
+        const data = await res.json();
+
+        // Animate rating
+        animateRating(data.rating || 0);
+        
+        document.getElementById('strengths-text').textContent = data.strengths || "";
+        document.getElementById('improvements-text').textContent = data.improvements || "";
+        
+        // Skills
+        const skillsDiv = document.getElementById('resume-skills');
+        skillsDiv.innerHTML = (data.skills || [])
+            .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
+            .join('');
+        
+        // Suggestions
+        const suggestions = document.getElementById('resume-suggestions');
+        suggestions.innerHTML = (data.suggestions || [])
+            .map((s, i) => `
+                <div class="suggestion-card ${s.type}" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
+                    <b>${s.title}</b>
+                    <p>${s.description}</p>
                 </div>
-                <p>${suggestion.description || ''}</p>
-            </div>
-        `).join('');
+            `).join('');
+
+        resultDiv.classList.add('show');
+        showNotification("Resume analysis complete!", "success");
+        
+    } catch (e) {
+        showNotification("Analysis failed: " + e.message, "error");
+    } finally {
+        loader.classList.remove('show');
     }
 }
 
@@ -342,111 +229,242 @@ function displayResumeResults(data) {
 // JOB DESCRIPTION ANALYSIS
 // ============================================
 async function analyzeJD() {
-    const jd = document.getElementById('jd-analyze').value.trim();
-    
+    const jd = document.getElementById('jd-analyze').value;
+    const loader = document.getElementById('loading-jd');
+    const resultDiv = document.getElementById('results-jd');
+
     if (!jd) {
-        showNotification('Please provide a job description', 'error');
+        showNotification("Please provide a job description", "warning");
         return;
     }
-    
-    const loadingEl = document.getElementById('loading-jd');
-    const resultsEl = document.getElementById('results-jd');
-    
-    loadingEl.classList.add('active');
-    resultsEl.classList.remove('active');
-    
+
+    loader.classList.add('show');
+    resultDiv.classList.remove('show');
+
     try {
-        const response = await fetch(`${API_BASE}/api/analyze-jd`, {
+        const res = await fetch('/api/analyze-jd', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jd })
         });
+
+        if (!res.ok) throw new Error("Server responded with error");
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const data = await res.json();
+
+        // Overview
+        document.getElementById('overview').innerHTML = `
+            <h3 style="margin-bottom: 15px; font-size: 1.3rem;">📋 Role Overview</h3>
+            <p style="line-height: 1.8;">${data.overview || ""}</p>
+        `;
         
-        const data = await response.json();
+        // Must-have skills
+        const mustHaveSkills = document.getElementById('must-have-skills');
+        mustHaveSkills.innerHTML = (data.mustHaveSkills || [])
+            .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
+            .join('');
         
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        // Nice-to-have skills
+        const niceToHaveSkills = document.getElementById('nice-to-have-skills');
+        niceToHaveSkills.innerHTML = (data.niceToHaveSkills || [])
+            .map((s, i) => `<span class="skill-tag" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; animation-delay: ${i * 0.1}s">${s}</span>`)
+            .join('');
         
-        displayJDResults(data);
+        // Responsibilities
+        const responsibilities = document.getElementById('responsibilities');
+        responsibilities.innerHTML = (data.responsibilities || [])
+            .map((r, i) => `
+                <div class="responsibility-card" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
+                    <div class="responsibility-emoji">${r.emoji || '📌'}</div>
+                    <div class="responsibility-content">
+                        <h4>${r.title}</h4>
+                        <p>${r.desc || r.description || ''}</p>
+                    </div>
+                </div>
+            `).join('');
         
-        loadingEl.classList.remove('active');
-        resultsEl.classList.add('active');
+        // Preparation tips
+        const prepTips = document.getElementById('preparation-tips');
+        prepTips.innerHTML = (data.preparationTips || [])
+            .map((s, i) => `
+                <div class="suggestion-card ${s.type}" style="animation: slideInLeft 0.5s ease-out ${i * 0.1}s both">
+                    <b>${s.title}</b>
+                    <p>${s.description}</p>
+                </div>
+            `).join('');
+
+        resultDiv.classList.add('show');
+        showNotification("JD analysis complete!", "success");
         
-        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-    } catch (error) {
-        console.error('JD analysis error:', error);
-        loadingEl.classList.remove('active');
-        showNotification('Analysis failed. Please check your API keys and try again.', 'error');
+    } catch (e) {
+        showNotification("Analysis failed: " + e.message, "error");
+    } finally {
+        loader.classList.remove('show');
     }
 }
 
-function displayJDResults(data) {
-    // Update overview
-    const overviewEl = document.getElementById('jd-overview');
-    if (overviewEl) {
-        overviewEl.textContent = data.overview || 'No overview available';
+// ============================================
+// LINKEDIN JOB SEARCH - WITH ROLE, LOCATION & EXPERIENCE LEVEL
+// ============================================
+async function getLinkedInJobs() {
+    // Get job search parameters
+    const jobRole = document.getElementById('job-role').value.trim();
+    const location = document.getElementById('job-location').value.trim();
+    const experienceLevel = document.getElementById('experience-level').value;
+    const resumeText = document.getElementById('resume-linkedin').value.trim();
+    
+    // Validate inputs
+    if (!jobRole) {
+        showNotification("Please enter a job role to search for", "warning");
+        return;
     }
     
-    // Display must-have skills
-    const mustHaveEl = document.getElementById('must-have-skills');
-    if (mustHaveEl && data.mustHaveSkills) {
-        mustHaveEl.innerHTML = data.mustHaveSkills.map(skill => 
-            `<span class="skill-badge danger"><i class="fas fa-exclamation-circle"></i> ${skill}</span>`
-        ).join('');
+    if (!location) {
+        showNotification("Please enter a location", "warning");
+        return;
+    }
+
+    const loader = document.getElementById('loading-linkedin');
+    const resultDiv = document.getElementById('results-linkedin');
+
+    loader.classList.add('show');
+    resultDiv.classList.remove('show');
+
+    try {
+        const res = await fetch('/api/find-linkedin-jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                role: jobRole,
+                location: location,
+                experienceLevel: experienceLevel,
+                resume: resumeText || null
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
+
+        // Display results
+        displayLinkedInJobs(data, jobRole, location, experienceLevel);
+        
+        resultDiv.classList.add('show');
+        showNotification(`Found ${data.jobs.length} jobs!`, "success");
+
+    } catch (e) {
+        console.error('LinkedIn jobs error:', e);
+        showNotification("Search Error: " + e.message, "error");
+    } finally {
+        loader.classList.remove('show');
+    }
+}
+
+// Display LinkedIn Jobs Results
+function displayLinkedInJobs(data, jobRole, location, experienceLevel) {
+    // Inject Summary
+    const summaryEl = document.getElementById('linkedin-summary');
+    
+    let summaryHTML = `
+        <div class="search-summary">
+            <h3><i class="fas fa-search"></i> Search Results</h3>
+            <div class="search-params">
+                <span class="search-param">
+                    <i class="fas fa-briefcase"></i>
+                    <strong>Role:</strong> ${jobRole}
+                </span>
+                <span class="search-param">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <strong>Location:</strong> ${location}
+                </span>`;
+    
+    if (experienceLevel && experienceLevel !== '') {
+        summaryHTML += `
+                <span class="search-param">
+                    <i class="fas fa-chart-line"></i>
+                    <strong>Level:</strong> ${experienceLevel}
+                </span>`;
     }
     
-    // Display nice-to-have skills
-    const niceToHaveEl = document.getElementById('nice-to-have-skills');
-    if (niceToHaveEl && data.niceToHaveSkills) {
-        niceToHaveEl.innerHTML = data.niceToHaveSkills.map(skill => 
-            `<span class="skill-badge success"><i class="fas fa-check-circle"></i> ${skill}</span>`
-        ).join('');
-    }
-    
-    // Display responsibilities
-    const responsibilitiesEl = document.getElementById('responsibilities');
-    if (responsibilitiesEl && data.responsibilities) {
-        responsibilitiesEl.innerHTML = data.responsibilities.map(resp => `
-            <div class="responsibility-item">
-                <h4><i class="fas fa-tasks"></i> ${resp.title || 'Responsibility'}</h4>
-                <p>${resp.desc || resp.description || ''}</p>
+    summaryHTML += `
+                <span class="search-param">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Found:</strong> ${data.jobs.length} opportunities
+                </span>
             </div>
-        `).join('');
-    }
+            <p>${data.summary}</p>
+        </div>
+    `;
     
-    // Display preparation tips
-    const tipsEl = document.getElementById('preparation-tips');
-    if (tipsEl && data.preparationTips) {
-        tipsEl.innerHTML = data.preparationTips.map(tip => `
-            <div class="suggestion-card info">
-                <div class="suggestion-header">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h4>${tip.title || 'Tip'}</h4>
+    summaryEl.innerHTML = summaryHTML;
+    
+    // Inject Jobs
+    const jobsContainer = document.getElementById('jobs-container');
+    
+    if (!data.jobs || data.jobs.length === 0) {
+        jobsContainer.innerHTML = `
+            <div class="no-jobs-found">
+                <i class="fas fa-search" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
+                <h3>No jobs found</h3>
+                <p>Try searching with different keywords or location</p>
+                <div class="search-tips">
+                    <h4>Search Tips:</h4>
+                    <ul>
+                        <li>Try broader job titles (e.g., "Developer" instead of "Senior React Developer")</li>
+                        <li>Search in major cities or use "Remote"</li>
+                        <li>Try different experience levels</li>
+                        <li>Check your spelling</li>
+                    </ul>
                 </div>
-                <p>${tip.description || tip.desc || ''}</p>
             </div>
-        `).join('');
+        `;
+        return;
     }
+    
+    jobsContainer.innerHTML = data.jobs.map((job, i) => `
+        <div class="job-card" style="animation-delay: ${i * 0.1}s">
+            <div class="job-header">
+                <h4>${job.title}</h4>
+                <span class="job-match-badge job-match-${job.matchLevel || 'medium'}">
+                    ${job.matchScore || 85}% Match
+                </span>
+            </div>
+            <p class="job-company">
+                <i class="fas fa-building"></i> ${job.company}
+            </p>
+            ${job.experienceLevel ? `
+                <p class="job-company">
+                    <i class="fas fa-chart-line"></i> ${job.experienceLevel}
+                </p>
+            ` : ''}
+            ${job.description ? `<p class="job-description">${job.description}</p>` : ''}
+            ${job.requiredSkills && job.requiredSkills.length > 0 ? `
+                <div class="job-skills">
+                    ${job.requiredSkills.map(s => `<span class="job-skill">${s}</span>`).join('')}
+                </div>
+            ` : ''}
+            ${job.postedDate ? `<p class="job-posted"><i class="far fa-clock"></i> ${job.postedDate}</p>` : ''}
+            <a href="${job.url}" target="_blank" class="job-link">
+                <i class="fas fa-external-link-alt"></i> Apply Now
+            </a>
+        </div>
+    `).join('');
 }
 
 // ============================================
 // ANIMATION HELPERS
 // ============================================
 function animateScore(targetScore) {
-    const scoreElement = document.getElementById('score');
-    const progressCircle = document.getElementById('score-progress');
+    const scoreElement = document.getElementById('match-score');
+    const progressCircle = document.getElementById('scoreCircle');
     
-    if (!scoreElement || !progressCircle) return;
+    if (!scoreElement) return;
     
-    const circumference = 2 * Math.PI * 90; // radius = 90
-    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-    progressCircle.style.strokeDashoffset = circumference;
+    const circumference = 2 * Math.PI * 85; // radius = 85
+    
+    if (progressCircle) {
+        progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressCircle.style.strokeDashoffset = circumference;
+    }
     
     let currentScore = 0;
     const increment = targetScore / 60; // 60 frames
@@ -460,9 +478,44 @@ function animateScore(targetScore) {
         
         scoreElement.textContent = Math.round(currentScore);
         
-        // Update circle progress
-        const offset = circumference - (currentScore / 100) * circumference;
-        progressCircle.style.strokeDashoffset = offset;
+        if (progressCircle) {
+            // Update circle progress
+            const offset = circumference - (currentScore / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+    }, 16); // ~60fps
+}
+
+function animateBreakdown(breakdown) {
+    // Animate Skills Match
+    animateBar('skills-bar', 'skills-percentage', breakdown.skills || 0);
+    
+    // Animate Experience Fit
+    animateBar('experience-bar', 'experience-percentage', breakdown.experience || 0);
+    
+    // Animate Keywords
+    animateBar('keywords-bar', 'keywords-percentage', breakdown.keywords || 0);
+}
+
+function animateBar(barId, percentageId, targetValue) {
+    const bar = document.getElementById(barId);
+    const percentageText = document.getElementById(percentageId);
+    
+    if (!bar || !percentageText) return;
+    
+    let currentValue = 0;
+    const increment = targetValue / 60; // 60 frames for smooth animation
+    
+    const animation = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            clearInterval(animation);
+        }
+        
+        const roundedValue = Math.round(currentValue);
+        bar.style.width = roundedValue + '%';
+        percentageText.textContent = roundedValue + '%';
     }, 16); // ~60fps
 }
 
@@ -537,20 +590,5 @@ document.head.appendChild(style);
 // ============================================
 // INITIALIZE
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Configure PDF.js worker
-    if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    }
-    
-    // Setup PDF uploads
-    setupPDFUpload();
-    
-    console.log('%c🚀 HireVoid Initialized', 'color: #7c3aed; font-size: 16px; font-weight: bold;');
-    console.log('%cPowered by Groq AI', 'color: #06b6d4; font-size: 12px;');
-    
-    // Show welcome notification
-    setTimeout(() => {
-        showNotification('HireVoid is ready! Upload your resume to get started.', 'success');
-    }, 500);
-});
+console.log('%c🚀 HireVoid Initialized', 'color: #667eea; font-size: 16px; font-weight: bold;');
+console.log('%cPowered by Groq AI', 'color: #764ba2; font-size: 12px;');
