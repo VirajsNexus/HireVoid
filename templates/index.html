@@ -3,749 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HireVoid - AI Resume Intelligence Platform</title>
-    
-    <!-- Tailwind CSS CDN -->
+    <title>HireVoid — AI Resume Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Custom Styles -->
     <link rel="stylesheet" href="/static/style.css">
-    
-    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+<canvas id="bgCanvas" class="bg-canvas"></canvas>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="noise-overlay"></div>
 
-<!-- Animated Background -->
-<div class="cyber-background">
-    <div class="grid-overlay"></div>
-    <div class="orb orb-purple"></div>
-    <div class="orb orb-cyan"></div>
-    <div class="orb orb-pink"></div>
-    <div class="scanline"></div>
-</div>
-
-<!-- Main Container -->
-<div class="main-container">
-    
-    <!-- Header / Navigation -->
-    <header class="cyber-header">
-        <div class="logo-container">
-            <div class="logo-hexagon">
-                <i class="fas fa-brain"></i>
+<!-- STICKY NAV -->
+<nav class="sticky-nav" id="stickyNav">
+    <div class="nav-inner">
+        <div class="nav-logo" onclick="scrollToTop()" style="cursor:pointer">
+            <div class="nav-logomark">
+                <div class="logomark-inner"><i class="fas fa-brain"></i></div>
+                <div class="logomark-ring"></div>
             </div>
-            <div class="logo-text">
-                <h1 class="logo-title">HIRE<span class="void-text">VOID</span></h1>
-                <p class="logo-subtitle">AI-POWERED CAREER INTELLIGENCE</p>
-            </div>
+            <span class="nav-brand">HIRE<span class="brand-void">VOID</span></span>
         </div>
-        <div class="status-badge">
-            <span class="pulse-dot"></span>
-            <span>Groq AI ACTIVE</span>
+        <div class="shortcut-bar">
+            <button class="shortcut-pill" onclick="launchTool('match')"><i class="fas fa-chart-bar"></i><span>Match</span></button>
+            <button class="shortcut-pill" onclick="launchTool('linkedin')"><i class="fab fa-linkedin"></i><span>Jobs</span></button>
+            <button class="shortcut-pill" onclick="launchTool('resume')"><i class="fas fa-file-alt"></i><span>Review</span></button>
+            <button class="shortcut-pill" onclick="launchTool('jd')"><i class="fas fa-bullseye"></i><span>Analyze JD</span></button>
         </div>
-    </header>
+        <div class="nav-right">
+            <div class="live-badge"><span class="live-dot"></span><span>Groq AI Live</span></div>
+            <button class="nav-cta" onclick="scrollToTools()">Get Started <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+</nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-content">
-            <h2 class="hero-title">
-                <span class="glitch-text" data-text="ANALYZING YOUR FUTURE">ANALYZING YOUR FUTURE</span>
-            </h2>
-            <p class="hero-description">
-                Advanced AI-powered resume analysis to unlock your career potential. 
-                Get instant insights, match scores, and strategic recommendations.
-            </p>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <i class="fas fa-robot stat-icon"></i>
-                    <div>
-                        <div class="stat-number">99.8%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
+<!-- LANDING HERO -->
+<section class="landing" id="landing">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+    <div class="orb orb-d"></div>
+    <div class="grid-lines">
+        <div class="gl gl-h" style="top:20%"></div>
+        <div class="gl gl-h" style="top:55%"></div>
+        <div class="gl gl-h" style="top:85%"></div>
+        <div class="gl gl-v" style="left:25%"></div>
+        <div class="gl gl-v" style="left:50%"></div>
+        <div class="gl gl-v" style="left:75%"></div>
+    </div>
+    <div class="landing-content">
+        <div class="land-eyebrow reveal-item" style="--rd:0ms">
+            <div class="eyebrow-pulse"></div>
+            <span>Groq AI &middot; Instant Analysis &middot; All Professions</span>
+        </div>
+        <h1 class="land-headline">
+            <span class="line-wrap reveal-item" style="--rd:80ms"><span class="line-inner">Land Your</span></span>
+            <span class="line-wrap reveal-item" style="--rd:200ms"><span class="line-inner sky-text">Dream Job</span></span>
+            <span class="line-wrap reveal-item" style="--rd:320ms"><span class="line-inner">with AI Clarity</span></span>
+        </h1>
+        <p class="land-sub reveal-item" style="--rd:440ms">
+            Upload your resume. Paste a job posting.<br>Get match scores, gap analysis &amp; strategic advice — in seconds.
+        </p>
+        <div class="land-ctas reveal-item" style="--rd:560ms">
+            <button class="hero-cta-primary" onclick="scrollToTools()">
+                <span class="cta-shine"></span>
+                <i class="fas fa-rocket"></i>
+                <span>Get Started Free</span>
+                <i class="fas fa-arrow-right cta-arr"></i>
+            </button>
+            <button class="hero-cta-secondary" onclick="launchTool('match')">
+                <i class="fas fa-play-circle"></i>
+                <span>Try Match Analysis</span>
+            </button>
+        </div>
+        <div class="land-stats reveal-item" style="--rd:680ms">
+            <div class="lstat"><span class="lstat-num" data-target="99.8" data-dec="1">0</span><span class="lstat-unit">%</span><span class="lstat-label">Accuracy</span></div>
+            <div class="lstat-sep"></div>
+            <div class="lstat"><span class="lstat-num" data-target="3" data-dec="0">0</span><span class="lstat-unit">s</span><span class="lstat-label">Analysis</span></div>
+            <div class="lstat-sep"></div>
+            <div class="lstat"><span class="lstat-num" data-target="10" data-dec="0">0</span><span class="lstat-unit">K+</span><span class="lstat-label">Resumes</span></div>
+            <div class="lstat-sep"></div>
+            <div class="lstat"><span class="lstat-num" data-target="50" data-dec="0">0</span><span class="lstat-unit">+</span><span class="lstat-label">Professions</span></div>
+        </div>
+    </div>
+    <div class="floating-cards">
+        <div class="fcard fc1 reveal-item" style="--rd:700ms">
+            <div class="fc-icon sky"><i class="fas fa-chart-bar"></i></div>
+            <div class="fc-text"><strong>Match Score</strong><span>Resume vs JD</span></div>
+            <div class="fc-badge">87%</div>
+        </div>
+        <div class="fcard fc2 reveal-item" style="--rd:820ms">
+            <div class="fc-icon violet"><i class="fas fa-check-circle"></i></div>
+            <div class="fc-text"><strong>Skills Matched</strong><span>React, Python, SQL</span></div>
+        </div>
+        <div class="fcard fc3 reveal-item" style="--rd:940ms">
+            <div class="fc-icon green"><i class="fas fa-lightbulb"></i></div>
+            <div class="fc-text"><strong>AI Tip</strong><span>Add Docker to resume</span></div>
+        </div>
+    </div>
+    <div class="scroll-hint reveal-item" style="--rd:1100ms">
+        <div class="scroll-track"><div class="scroll-thumb"></div></div>
+        <span>Scroll to explore</span>
+    </div>
+</section>
+
+<!-- TOOL CHOOSER -->
+<section class="tool-chooser" id="toolChooser">
+    <div class="chooser-inner">
+        <div class="chooser-header">
+            <span class="eyebrow-tag">Choose Your Tool</span>
+            <h2>What do you want to do?</h2>
+            <p>Select a tool to get started — all powered by Groq AI</p>
+        </div>
+        <div class="chooser-grid">
+            <button class="tc tc-match" onclick="launchTool('match')">
+                <div class="tc-glow"></div>
+                <div class="tc-icon sky"><i class="fas fa-chart-bar"></i></div>
+                <div class="tc-body">
+                    <h3>Match Analysis</h3>
+                    <p>Compare resume against a job description and get an AI match score with breakdown</p>
                 </div>
-                <div class="stat-item">
-                    <i class="fas fa-bolt stat-icon"></i>
-                    <div>
-                        <div class="stat-number">&lt;3s</div>
-                        <div class="stat-label">Analysis</div>
-                    </div>
+                <div class="tc-footer">
+                    <span class="tc-popular">Most Popular</span>
+                    <i class="fas fa-arrow-right tc-arr"></i>
                 </div>
-                <div class="stat-item">
-                    <i class="fas fa-chart-line stat-icon"></i>
-                    <div>
-                        <div class="stat-number">10K+</div>
-                        <div class="stat-label">Analyzed</div>
-                    </div>
+            </button>
+            <button class="tc tc-linkedin" onclick="launchTool('linkedin')">
+                <div class="tc-glow"></div>
+                <div class="tc-icon violet"><i class="fab fa-linkedin"></i></div>
+                <div class="tc-body">
+                    <h3>Job Search</h3>
+                    <p>Find relevant job openings by role, location, and experience level worldwide</p>
                 </div>
+                <div class="tc-footer"><i class="fas fa-arrow-right tc-arr"></i></div>
+            </button>
+            <button class="tc tc-resume" onclick="launchTool('resume')">
+                <div class="tc-glow"></div>
+                <div class="tc-icon blue"><i class="fas fa-file-alt"></i></div>
+                <div class="tc-body">
+                    <h3>Resume Review</h3>
+                    <p>Get expert AI feedback, a quality score out of 10, and improvement tips</p>
+                </div>
+                <div class="tc-footer"><i class="fas fa-arrow-right tc-arr"></i></div>
+            </button>
+            <button class="tc tc-jd" onclick="launchTool('jd')">
+                <div class="tc-glow"></div>
+                <div class="tc-icon amber"><i class="fas fa-bullseye"></i></div>
+                <div class="tc-body">
+                    <h3>Analyze JD</h3>
+                    <p>Decode any job description — required skills, responsibilities &amp; prep tips</p>
+                </div>
+                <div class="tc-footer"><i class="fas fa-arrow-right tc-arr"></i></div>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- WORKSPACE -->
+<section class="workspace" id="workspace" style="display:none">
+    <div class="workspace-wrap">
+        <div class="ws-topbar">
+            <button class="ws-back-btn" onclick="backToChooser()"><i class="fas fa-arrow-left"></i> Back to Tools</button>
+            <div class="ws-tabs-row">
+                <button class="ws-tab" id="wstab-match" onclick="switchTab('match', event)"><i class="fas fa-chart-bar"></i><span>Match</span></button>
+                <button class="ws-tab" id="wstab-linkedin" onclick="switchTab('linkedin', event)"><i class="fab fa-linkedin"></i><span>Jobs</span></button>
+                <button class="ws-tab" id="wstab-resume" onclick="switchTab('resume', event)"><i class="fas fa-file-alt"></i><span>Review</span></button>
+                <button class="ws-tab" id="wstab-jd" onclick="switchTab('jd', event)"><i class="fas fa-bullseye"></i><span>Analyze JD</span></button>
             </div>
         </div>
-    </section>
 
-    <!-- Tab Navigation -->
-    <nav class="tab-navigation">
-        <div class="tab active" onclick="switchTab('match', event)">
-            <i class="fas fa-chart-bar tab-icon"></i>
-            <span class="tab-label">Match Analysis</span>
-            <div class="tab-indicator"></div>
-        </div>
-        <div class="tab" onclick="switchTab('linkedin', event)">
-            <i class="fab fa-linkedin tab-icon"></i>
-            <span class="tab-label">LinkedIn Jobs</span>
-            <div class="tab-indicator"></div>
-        </div>
-        <div class="tab" onclick="switchTab('resume', event)">
-            <i class="fas fa-file-alt tab-icon"></i>
-            <span class="tab-label">Resume Review</span>
-            <div class="tab-indicator"></div>
-        </div>
-        <div class="tab" onclick="switchTab('jd', event)">
-            <i class="fas fa-bullseye tab-icon"></i>
-            <span class="tab-label">Analyze JD</span>
-            <div class="tab-indicator"></div>
-        </div>
-    </nav>
-
-    <!-- Tab Content Container -->
-    <div class="tab-content-wrapper">
-
-        <!-- ========== MATCH ANALYSIS TAB ========== -->
-        <div id="match-tab" class="tab-content active">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-crosshairs"></i>
-                    Resume vs Job Description Match
-                </h2>
-                <p class="section-description">Upload your resume and paste a job description to see how well you match</p>
+        <!-- MATCH TAB -->
+        <div id="match-tab" class="tab-content">
+            <div class="panel-hdr sky-hdr">
+                <div class="ph-icon sky-icon"><i class="fas fa-crosshairs"></i></div>
+                <div><h2>Resume vs Job Match</h2><p>See exactly how well you align</p></div>
+                <span class="ph-badge">AI Powered</span>
             </div>
-            
-            <div class="input-grid">
-                <!-- Resume Input Card -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <i class="fas fa-file-pdf card-icon"></i>
-                        <h3 class="card-title">Your Resume</h3>
-                    </div>
+            <div class="dual-grid">
+                <div class="input-panel">
+                    <div class="ip-hdr"><i class="fas fa-file-pdf"></i><h3>Your Resume</h3></div>
                     <div class="upload-zone">
                         <input type="file" class="pdf-upload" data-target="resume-match" accept=".pdf" id="resume-upload-match">
-                        <label for="resume-upload-match" class="upload-label">
-                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                            <span class="upload-text">Drop PDF or click to upload</span>
-                            <span class="upload-hint">PDF format supported</span>
+                        <label for="resume-upload-match" class="upload-lbl">
+                            <div class="ul-ico"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <strong>Drop PDF or click to upload</strong>
+                            <span>PDF format only</span>
                         </label>
                     </div>
-                    <textarea id="resume-match" class="cyber-textarea" placeholder="Extracted resume text will appear here..."></textarea>
+                    <textarea id="resume-match" class="textarea-field" placeholder="Or paste your resume text here..."></textarea>
                 </div>
-                
-                <!-- Job Description Input Card -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <i class="fas fa-briefcase card-icon"></i>
-                        <h3 class="card-title">Job Description</h3>
-                    </div>
-                    <textarea id="jd-match" class="cyber-textarea tall" placeholder="Paste the complete job description here...
-
-Include:
-• Job title and company
-• Key responsibilities
-• Required skills and qualifications
-• Nice-to-have skills
-• Experience requirements"></textarea>
+                <div class="input-panel">
+                    <div class="ip-hdr"><i class="fas fa-briefcase"></i><h3>Job Description</h3></div>
+                    <textarea id="jd-match" class="textarea-field tall-field" placeholder="Paste the full job description here...&#10;&#10;• Job title &amp; company&#10;• Responsibilities  &#10;• Required skills&#10;• Nice-to-haves"></textarea>
                 </div>
             </div>
-            
-            <button class="cyber-btn primary" onclick="analyzeMatch()">
-                <i class="fas fa-search btn-icon"></i>
-                <span>ANALYZE MATCH</span>
-                <div class="btn-glow"></div>
-            </button>
-            
-            <!-- Loading Animation -->
-            <div id="loading-match" class="loading-overlay">
-                <div class="loading-content">
-                    <div class="loading-hexagon">
-                        <div class="hexagon-spinner"></div>
-                        <i class="fas fa-brain loading-brain"></i>
-                    </div>
-                    <p class="loading-text">ANALYZING WITH AI...</p>
-                    <p class="loading-subtext">Processing your data through neural networks</p>
-                </div>
-            </div>
-            
-            <!-- Results Section -->
+            <button class="run-btn sky-btn" onclick="analyzeMatch()"><span class="rb-shine"></span><i class="fas fa-search"></i> Analyze Match</button>
+            <div id="loading-match" class="loading-overlay"><div class="loader-box"><div class="loader-orb"><div class="lo-r lo-r1"></div><div class="lo-r lo-r2"></div><div class="lo-r lo-r3"></div><i class="fas fa-brain lo-ico"></i></div><p class="lt">Analyzing with AI</p><p class="ls">Processing through neural networks...</p><div class="lbar"><div class="lbar-f"></div></div></div></div>
             <div id="results-match" class="results-section">
-                <!-- HUD Score Display -->
-                <div class="hud-score-container">
-                    <div class="circular-progress">
-                        <svg class="progress-ring" viewBox="0 0 200 200">
-                            <defs>
-                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#06b6d4"/>
-                                    <stop offset="100%" style="stop-color:#7c3aed"/>
-                                </linearGradient>
-                            </defs>
-                            <circle class="progress-ring-bg" cx="100" cy="100" r="85" />
-                            <circle class="progress-ring-circle" cx="100" cy="100" r="85" id="scoreCircle"/>
+                <div class="score-panel">
+                    <div class="sp-ring">
+                        <svg class="sp-svg" viewBox="0 0 200 200">
+                            <defs><linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#38bdf8"/><stop offset="100%" style="stop-color:#7c3aed"/></linearGradient></defs>
+                            <circle class="sp-track" cx="100" cy="100" r="85"/>
+                            <circle class="sp-fill" cx="100" cy="100" r="85" id="scoreCircle"/>
                         </svg>
-                        <div class="score-display">
-                            <div id="match-score" class="score-number">0</div>
-                            <div class="score-label">MATCH</div>
-                        </div>
+                        <div class="sp-center"><div id="match-score" class="sp-num">0</div><div class="sp-lbl">% Match</div></div>
                     </div>
-                    
-                    <div class="score-breakdown">
-                        <h3 class="breakdown-title">
-                            <i class="fas fa-chart-pie"></i>
-                            Match Breakdown
-                        </h3>
-                        <div class="breakdown-bars">
-                            <div class="breakdown-item">
-                                <div class="breakdown-label">
-                                    <span>Skills Match</span>
-                                    <span id="skills-percentage">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill skills" id="skills-bar"></div>
-                                </div>
-                            </div>
-                            <div class="breakdown-item">
-                                <div class="breakdown-label">
-                                    <span>Experience Fit</span>
-                                    <span id="experience-percentage">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill experience" id="experience-bar"></div>
-                                </div>
-                            </div>
-                            <div class="breakdown-item">
-                                <div class="breakdown-label">
-                                    <span>Keywords</span>
-                                    <span id="keywords-percentage">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill keywords" id="keywords-bar"></div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="sp-bars">
+                        <h4 class="bars-title"><i class="fas fa-sliders-h"></i> Score Breakdown</h4>
+                        <div class="bar-row"><div class="br-meta"><span>Skills Match</span><span id="skills-percentage" class="br-pct">0%</span></div><div class="br-track"><div class="br-fill sky-fill" id="skills-bar"></div></div></div>
+                        <div class="bar-row"><div class="br-meta"><span>Experience Fit</span><span id="experience-percentage" class="br-pct">0%</span></div><div class="br-track"><div class="br-fill violet-fill" id="experience-bar"></div></div></div>
+                        <div class="bar-row"><div class="br-meta"><span>Keywords</span><span id="keywords-percentage" class="br-pct">0%</span></div><div class="br-track"><div class="br-fill blue-fill" id="keywords-bar"></div></div></div>
                     </div>
                 </div>
-                
-                <!-- Skills Comparison -->
-                <div class="skills-comparison">
-                    <div class="glass-card">
-                        <h3 class="card-header">
-                            <i class="fas fa-check-circle card-icon matched"></i>
-                            Matched Skills
-                        </h3>
-                        <div id="matched-skills" class="skill-tags"></div>
-                    </div>
-                    
-                    <div class="glass-card">
-                        <h3 class="card-header">
-                            <i class="fas fa-times-circle card-icon missing"></i>
-                            Missing Skills
-                        </h3>
-                        <div id="missing-skills" class="skill-tags"></div>
-                    </div>
+                <div class="two-boxes">
+                    <div class="info-box ib-green"><div class="ib-hdr"><i class="fas fa-check-circle"></i><h3>Matched Skills</h3></div><div id="matched-skills" class="tag-cloud"></div></div>
+                    <div class="info-box ib-red"><div class="ib-hdr"><i class="fas fa-times-circle"></i><h3>Missing Skills</h3></div><div id="missing-skills" class="tag-cloud"></div></div>
                 </div>
-                
-                <!-- Detailed Analysis -->
-                <div class="glass-card analysis-card">
-                    <h3 class="card-header">
-                        <i class="fas fa-microscope card-icon"></i>
-                        Detailed Analysis
-                    </h3>
-                    <p id="analysis-text" class="analysis-text"></p>
-                </div>
-                
-                <!-- Recommendations -->
-                <div class="recommendations-section">
-                    <h3 class="section-subtitle">
-                        <i class="fas fa-lightbulb"></i>
-                        Strategic Recommendations
-                    </h3>
-                    <div id="recommendations" class="suggestions-grid"></div>
-                </div>
+                <div class="info-box analysis-box"><div class="ib-hdr"><i class="fas fa-microscope"></i><h3>Detailed Analysis</h3></div><p id="analysis-text" class="body-txt"></p></div>
+                <div class="recs-sec"><h3 class="recs-h"><i class="fas fa-lightbulb"></i> Strategic Recommendations</h3><div id="recommendations" class="recs-list"></div></div>
             </div>
         </div>
 
-        <!-- ========== LINKEDIN JOBS TAB ========== -->
+        <!-- LINKEDIN TAB -->
         <div id="linkedin-tab" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fab fa-linkedin"></i>
-                    Job Search
-                </h2>
-                <p class="section-description">Find jobs by role, location, and experience level - Works for ALL professions!</p>
+            <div class="panel-hdr violet-hdr">
+                <div class="ph-icon violet-icon"><i class="fab fa-linkedin"></i></div>
+                <div><h2>Job Search</h2><p>Find jobs by role, location, and level</p></div>
+                <span class="ph-badge">Live Search</span>
             </div>
-            
-            <!-- Job Search Filters -->
-            <div class="search-filters-grid">
-                <!-- Job Role -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <i class="fas fa-briefcase card-icon"></i>
-                        <h3 class="card-title">Job Role / Title</h3>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="job-role" 
-                        class="cyber-input" 
-                        placeholder="e.g., Software Engineer, Data Scientist, Marketing Manager, Nurse, Teacher, Accountant..."
-                    />
-                    <p class="input-hint">Enter any job title or profession you're looking for</p>
-                </div>
-                
-                <!-- Location -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <i class="fas fa-map-marker-alt card-icon"></i>
-                        <h3 class="card-title">Location</h3>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="job-location" 
-                        class="cyber-input" 
-                        placeholder="e.g., New York, London, Remote, Bangalore, Tokyo..."
-                    />
-                    <p class="input-hint">Enter city, country, or "Remote"</p>
-                </div>
-                
-                <!-- Experience Level -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-line card-icon"></i>
-                        <h3 class="card-title">Experience Level</h3>
-                    </div>
-                    <select id="experience-level" class="cyber-select">
-                        <option value="">All Levels</option>
-                        <option value="Internship">Internship</option>
-                        <option value="Entry Level">Entry Level</option>
-                        <option value="Mid Level">Mid Level</option>
-                        <option value="Senior">Senior</option>
-                        <option value="Lead">Lead</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Director">Director</option>
-                        <option value="Executive">Executive</option>
-                    </select>
-                    <p class="input-hint">Select your experience level (optional)</p>
-                </div>
+            <div class="tri-grid">
+                <div class="input-panel"><div class="ip-hdr"><i class="fas fa-briefcase"></i><h3>Job Role</h3></div><input type="text" id="job-role" class="input-field" placeholder="e.g. Software Engineer, Nurse..."/><p class="inp-hint"><i class="fas fa-info-circle"></i> Any profession</p></div>
+                <div class="input-panel"><div class="ip-hdr"><i class="fas fa-map-marker-alt"></i><h3>Location</h3></div><input type="text" id="job-location" class="input-field" placeholder="e.g. New York, Remote..."/><p class="inp-hint"><i class="fas fa-info-circle"></i> City, country, or "Remote"</p></div>
+                <div class="input-panel"><div class="ip-hdr"><i class="fas fa-chart-line"></i><h3>Experience Level</h3></div><select id="experience-level" class="select-field"><option value="">All Levels</option><option>Internship</option><option>Entry Level</option><option>Mid Level</option><option>Senior</option><option>Lead</option><option>Manager</option><option>Director</option><option>Executive</option></select><p class="inp-hint"><i class="fas fa-info-circle"></i> Optional</p></div>
             </div>
-            
-            <!-- Quick Filters -->
-            <div class="glass-card">
-                <div class="card-header">
-                    <i class="fas fa-filter card-icon"></i>
-                    <h3 class="card-title">Quick Filters (Optional)</h3>
-                </div>
-                <div class="quick-filters">
-                    <button class="filter-chip" onclick="applyQuickFilter('Remote')">
-                        <i class="fas fa-home"></i> Remote Only
-                    </button>
-                    <button class="filter-chip" onclick="applyQuickFilter('Full-time')">
-                        <i class="fas fa-briefcase"></i> Full-time
-                    </button>
-                    <button class="filter-chip" onclick="applyQuickFilter('Contract')">
-                        <i class="fas fa-file-contract"></i> Contract
-                    </button>
-                    <button class="filter-chip" onclick="applyQuickFilter('Part-time')">
-                        <i class="fas fa-clock"></i> Part-time
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Optional Resume Upload -->
-            <div class="glass-card">
-                <div class="card-header">
-                    <i class="fas fa-file-pdf card-icon"></i>
-                    <h3 class="card-title">Your Resume (Optional)</h3>
-                </div>
-                <p class="section-description" style="margin-bottom: 1rem;">Upload your resume for better job matching and personalized recommendations</p>
-                <div class="upload-zone">
-                    <input type="file" class="pdf-upload" data-target="resume-linkedin" accept=".pdf" id="resume-upload-linkedin">
-                    <label for="resume-upload-linkedin" class="upload-label">
-                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <span class="upload-text">Drop PDF or click to upload</span>
-                        <span class="upload-hint">Upload resume for better job matching (optional)</span>
-                    </label>
-                </div>
-                <textarea id="resume-linkedin" class="cyber-textarea" placeholder="Or paste your resume text here for better job matching..."></textarea>
-            </div>
-            
-            <!-- Search Button -->
-            <button class="cyber-btn primary" onclick="getLinkedInJobs()">
-                <i class="fas fa-search btn-icon"></i>
-                <span>SEARCH JOBS</span>
-                <div class="btn-glow"></div>
-            </button>
-            
-            <!-- Loading Animation -->
-            <div id="loading-linkedin" class="loading-overlay">
-                <div class="loading-content">
-                    <div class="loading-hexagon">
-                        <div class="hexagon-spinner"></div>
-                        <i class="fab fa-linkedin loading-brain"></i>
-                    </div>
-                    <p class="loading-text">SEARCHING JOBS...</p>
-                    <p class="loading-subtext">Finding the best opportunities for you</p>
-                </div>
-            </div>
-            
-            <!-- Results Section -->
-            <div id="results-linkedin" class="results-section">
-                <div id="linkedin-summary" class="linkedin-summary"></div>
-                <div id="jobs-container" class="jobs-grid"></div>
-            </div>
+            <div class="input-panel" style="margin-bottom:1.25rem"><div class="ip-hdr"><i class="fas fa-filter"></i><h3>Quick Filters</h3></div><div class="chips-row"><button class="chip-btn" onclick="applyQuickFilter('Remote')"><i class="fas fa-home"></i> Remote</button><button class="chip-btn" onclick="applyQuickFilter('Full-time')"><i class="fas fa-briefcase"></i> Full-time</button><button class="chip-btn" onclick="applyQuickFilter('Contract')"><i class="fas fa-file-contract"></i> Contract</button><button class="chip-btn" onclick="applyQuickFilter('Part-time')"><i class="fas fa-clock"></i> Part-time</button></div></div>
+            <div class="input-panel" style="margin-bottom:1.25rem"><div class="ip-hdr"><i class="fas fa-file-pdf"></i><h3>Resume <span class="opt-lbl">Optional</span></h3></div><div class="upload-zone"><input type="file" class="pdf-upload" data-target="resume-linkedin" accept=".pdf" id="resume-upload-linkedin"><label for="resume-upload-linkedin" class="upload-lbl"><div class="ul-ico"><i class="fas fa-cloud-upload-alt"></i></div><strong>Drop PDF or click to upload</strong><span>Better matching with resume</span></label></div><textarea id="resume-linkedin" class="textarea-field" placeholder="Or paste resume text here..."></textarea></div>
+            <button class="run-btn violet-btn" onclick="getLinkedInJobs()"><span class="rb-shine"></span><i class="fas fa-search"></i> Search Jobs</button>
+            <div id="loading-linkedin" class="loading-overlay"><div class="loader-box"><div class="loader-orb"><div class="lo-r lo-r1"></div><div class="lo-r lo-r2"></div><div class="lo-r lo-r3"></div><i class="fab fa-linkedin lo-ico"></i></div><p class="lt">Searching Jobs</p><p class="ls">Finding best opportunities...</p><div class="lbar"><div class="lbar-f"></div></div></div></div>
+            <div id="results-linkedin" class="results-section"><div id="linkedin-summary"></div><div id="jobs-container" class="jobs-grid"></div></div>
         </div>
 
-        <!-- ========== RESUME REVIEW TAB ========== -->
+        <!-- RESUME TAB -->
         <div id="resume-tab" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-file-alt"></i>
-                    Professional Resume Review
-                </h2>
-                <p class="section-description">Get expert AI feedback on your resume</p>
+            <div class="panel-hdr blue-hdr">
+                <div class="ph-icon blue-icon"><i class="fas fa-file-alt"></i></div>
+                <div><h2>Resume Review</h2><p>Expert AI feedback on your resume</p></div>
+                <span class="ph-badge">Deep Review</span>
             </div>
-            
-            <div class="glass-card">
-                <div class="card-header">
-                    <i class="fas fa-file-pdf card-icon"></i>
-                    <h3 class="card-title">Your Resume</h3>
-                </div>
-                <div class="upload-zone">
-                    <input type="file" class="pdf-upload" data-target="resume-review" accept=".pdf" id="resume-upload-review">
-                    <label for="resume-upload-review" class="upload-label">
-                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <span class="upload-text">Drop PDF or click to upload</span>
-                        <span class="upload-hint">PDF format supported</span>
-                    </label>
-                </div>
-                <textarea id="resume-review" class="cyber-textarea" placeholder="Extracted resume text will appear here..."></textarea>
-            </div>
-            
-            <button class="cyber-btn primary" onclick="reviewResume()">
-                <i class="fas fa-search btn-icon"></i>
-                <span>REVIEW RESUME</span>
-                <div class="btn-glow"></div>
-            </button>
-            
-            <div id="loading-resume" class="loading-overlay">
-                <div class="loading-content">
-                    <div class="loading-hexagon">
-                        <div class="hexagon-spinner"></div>
-                        <i class="fas fa-search loading-brain"></i>
-                    </div>
-                    <p class="loading-text">ANALYZING YOUR RESUME...</p>
-                </div>
-            </div>
-            
+            <div class="input-panel"><div class="ip-hdr"><i class="fas fa-file-pdf"></i><h3>Your Resume</h3></div><div class="upload-zone"><input type="file" class="pdf-upload" data-target="resume-review" accept=".pdf" id="resume-upload-review"><label for="resume-upload-review" class="upload-lbl"><div class="ul-ico"><i class="fas fa-cloud-upload-alt"></i></div><strong>Drop PDF or click to upload</strong><span>PDF format supported</span></label></div><textarea id="resume-review" class="textarea-field" placeholder="Extracted resume text appears here..."></textarea></div>
+            <button class="run-btn blue-btn" onclick="reviewResume()"><span class="rb-shine"></span><i class="fas fa-search"></i> Review Resume</button>
+            <div id="loading-resume" class="loading-overlay"><div class="loader-box"><div class="loader-orb"><div class="lo-r lo-r1"></div><div class="lo-r lo-r2"></div><div class="lo-r lo-r3"></div><i class="fas fa-search lo-ico"></i></div><p class="lt">Reviewing Resume</p><p class="ls">Deep analysis in progress...</p><div class="lbar"><div class="lbar-f"></div></div></div></div>
             <div id="results-resume" class="results-section">
-                <div class="rating-display">
-                    <div class="rating-circle">
-                        <div id="rating" class="rating-number">0</div>
-                        <div class="rating-max">/10</div>
-                    </div>
-                    <div class="rating-label">OVERALL RATING</div>
-                </div>
-                
-                <div class="analysis-grid">
-                    <div class="glass-card analysis-card">
-                        <h3 class="card-header">
-                            <i class="fas fa-trophy card-icon"></i>
-                            Strengths
-                        </h3>
-                        <p id="strengths-text" class="analysis-text"></p>
-                    </div>
-                    
-                    <div class="glass-card analysis-card">
-                        <h3 class="card-header">
-                            <i class="fas fa-target card-icon"></i>
-                            Areas for Improvement
-                        </h3>
-                        <p id="improvements-text" class="analysis-text"></p>
-                    </div>
-                    
-                    <div class="glass-card analysis-card full-width">
-                        <h3 class="card-header">
-                            <i class="fas fa-tools card-icon"></i>
-                            Identified Skills
-                        </h3>
-                        <div id="resume-skills" class="skill-tags"></div>
-                    </div>
-                </div>
-                
-                <div class="recommendations-section">
-                    <h3 class="section-subtitle">
-                        <i class="fas fa-lightbulb"></i>
-                        Recommendations
-                    </h3>
-                    <div id="resume-suggestions" class="suggestions-grid"></div>
-                </div>
+                <div class="rating-strip"><div class="rs-ring"><span id="rating" class="rs-num">0</span><span class="rs-denom">/10</span></div><div><p class="rs-title">Overall Score</p><p class="rs-sub">Structure, content &amp; impact</p></div></div>
+                <div class="two-boxes"><div class="info-box ib-green"><div class="ib-hdr"><i class="fas fa-trophy"></i><h3>Strengths</h3></div><p id="strengths-text" class="body-txt"></p></div><div class="info-box ib-amber"><div class="ib-hdr"><i class="fas fa-arrow-trend-up"></i><h3>Improvements</h3></div><p id="improvements-text" class="body-txt"></p></div></div>
+                <div class="info-box full-ibox"><div class="ib-hdr"><i class="fas fa-tools"></i><h3>Identified Skills</h3></div><div id="resume-skills" class="tag-cloud"></div></div>
+                <div class="recs-sec"><h3 class="recs-h"><i class="fas fa-lightbulb"></i> Recommendations</h3><div id="resume-suggestions" class="recs-list"></div></div>
             </div>
         </div>
 
-        <!-- ========== JD ANALYSIS TAB ========== -->
+        <!-- JD TAB -->
         <div id="jd-tab" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-bullseye"></i>
-                    Job Description Analysis
-                </h2>
-                <p class="section-description">Understand what employers are really looking for</p>
+            <div class="panel-hdr amber-hdr">
+                <div class="ph-icon amber-icon"><i class="fas fa-bullseye"></i></div>
+                <div><h2>Job Description Analysis</h2><p>Decode what employers really want</p></div>
+                <span class="ph-badge">Deep Decode</span>
             </div>
-            
-            <div class="glass-card">
-                <div class="card-header">
-                    <i class="fas fa-briefcase card-icon"></i>
-                    <h3 class="card-title">Job Description</h3>
-                </div>
-                <textarea id="jd-analyze" class="cyber-textarea tall" placeholder="Paste the complete job description here...
-
-We'll analyze:
-• Required vs preferred skills
-• Key responsibilities
-• Hidden requirements
-• Interview preparation tips"></textarea>
-            </div>
-            
-            <button class="cyber-btn primary" onclick="analyzeJD()">
-                <i class="fas fa-bullseye btn-icon"></i>
-                <span>ANALYZE JOB DESCRIPTION</span>
-                <div class="btn-glow"></div>
-            </button>
-            
-            <div id="loading-jd" class="loading-overlay">
-                <div class="loading-content">
-                    <div class="loading-hexagon">
-                        <div class="hexagon-spinner"></div>
-                        <i class="fas fa-bullseye loading-brain"></i>
-                    </div>
-                    <p class="loading-text">ANALYZING JOB DESCRIPTION...</p>
-                </div>
-            </div>
-            
+            <div class="input-panel"><div class="ip-hdr"><i class="fas fa-briefcase"></i><h3>Job Description</h3></div><textarea id="jd-analyze" class="textarea-field tall-field" placeholder="Paste the full job description here...&#10;&#10;We'll extract:&#10;• Required vs preferred skills&#10;• Key responsibilities&#10;• Hidden requirements&#10;• Interview tips"></textarea></div>
+            <button class="run-btn amber-btn" onclick="analyzeJD()"><span class="rb-shine"></span><i class="fas fa-bullseye"></i> Analyze Job Description</button>
+            <div id="loading-jd" class="loading-overlay"><div class="loader-box"><div class="loader-orb"><div class="lo-r lo-r1"></div><div class="lo-r lo-r2"></div><div class="lo-r lo-r3"></div><i class="fas fa-bullseye lo-ico"></i></div><p class="lt">Analyzing JD</p><p class="ls">Extracting key requirements...</p><div class="lbar"><div class="lbar-f"></div></div></div></div>
             <div id="results-jd" class="results-section">
-                <div id="overview" class="jd-overview"></div>
-                
-                <div class="skills-grid">
-                    <div class="glass-card skill-card must-have">
-                        <div class="card-header">
-                            <i class="fas fa-star card-icon"></i>
-                            <h3 class="card-title">Must-Have Skills</h3>
-                        </div>
-                        <div id="must-have-skills" class="skill-tags"></div>
-                    </div>
-                    
-                    <div class="glass-card skill-card nice-to-have">
-                        <div class="card-header">
-                            <i class="fas fa-sparkles card-icon"></i>
-                            <h3 class="card-title">Nice-to-Have Skills</h3>
-                        </div>
-                        <div id="nice-to-have-skills" class="skill-tags"></div>
-                    </div>
-                </div>
-                
-                <div class="responsibilities-section">
-                    <h3 class="section-subtitle">
-                        <i class="fas fa-clipboard-list"></i>
-                        Key Responsibilities
-                    </h3>
-                    <div id="responsibilities" class="responsibilities-grid"></div>
-                </div>
-                
-                <div class="recommendations-section">
-                    <h3 class="section-subtitle">
-                        <i class="fas fa-graduation-cap"></i>
-                        Preparation Tips
-                    </h3>
-                    <div id="preparation-tips" class="suggestions-grid"></div>
-                </div>
+                <div id="overview" class="overview-box"></div>
+                <div class="two-boxes"><div class="info-box ib-amber"><div class="ib-hdr"><i class="fas fa-star"></i><h3>Must-Have Skills</h3></div><div id="must-have-skills" class="tag-cloud"></div></div><div class="info-box ib-violet"><div class="ib-hdr"><i class="fas fa-plus-circle"></i><h3>Nice-to-Have</h3></div><div id="nice-to-have-skills" class="tag-cloud"></div></div></div>
+                <div class="recs-sec"><h3 class="recs-h"><i class="fas fa-clipboard-list"></i> Key Responsibilities</h3><div id="responsibilities" class="resp-stack"></div></div>
+                <div class="recs-sec"><h3 class="recs-h"><i class="fas fa-graduation-cap"></i> Preparation Tips</h3><div id="preparation-tips" class="recs-list"></div></div>
             </div>
         </div>
-
     </div>
+</section>
 
-    <!-- About This Project Section -->
-    <section class="about-section">
-        <div class="about-card">
-            <div class="about-header">
-                <div class="about-icon">
-                    <i class="fas fa-info-circle"></i>
+<!-- HOW IT WORKS -->
+<section class="how-section">
+    <div class="section-wrap">
+        <span class="eyebrow-tag">Simple Process</span>
+        <h2 class="sec-h2">How HireVoid Works</h2>
+        <p class="sec-p">Four steps from upload to career clarity</p>
+        <div class="how-grid">
+            <div class="how-step"><div class="hs-num">01</div><div class="hs-icon"><i class="fas fa-hand-pointer"></i></div><h4>Choose a Tool</h4><p>Pick Match Analysis, Job Search, Resume Review, or JD Decode</p></div>
+            <div class="hs-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="how-step"><div class="hs-num">02</div><div class="hs-icon"><i class="fas fa-upload"></i></div><h4>Upload Resume</h4><p>Drop your PDF or paste text — any profession worldwide</p></div>
+            <div class="hs-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="how-step"><div class="hs-num">03</div><div class="hs-icon"><i class="fas fa-robot"></i></div><h4>AI Analyzes</h4><p>Groq AI processes your data and generates insights in seconds</p></div>
+            <div class="hs-arrow"><i class="fas fa-chevron-right"></i></div>
+            <div class="how-step"><div class="hs-num">04</div><div class="hs-icon"><i class="fas fa-rocket"></i></div><h4>Take Action</h4><p>Apply recommendations and land your dream job faster</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="feat-section">
+    <div class="section-wrap">
+        <div class="feat-grid">
+            <div class="feat-card"><div class="fc-icon sky-ico"><i class="fas fa-globe"></i></div><h4>All Professions</h4><p>Works for tech, healthcare, teaching, finance &amp; every career</p></div>
+            <div class="feat-card"><div class="fc-icon violet-ico"><i class="fas fa-brain"></i></div><h4>Groq AI Engine</h4><p>Ultra-fast frontier AI for reliable nuanced analysis</p></div>
+            <div class="feat-card"><div class="fc-icon blue-ico"><i class="fas fa-shield-alt"></i></div><h4>Privacy First</h4><p>Your data is never stored or shared — fully confidential</p></div>
+            <div class="feat-card"><div class="fc-icon green-ico"><i class="fas fa-bolt"></i></div><h4>Instant Results</h4><p>Analysis completes under 3 seconds — no waiting</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- ARCHITECT -->
+<section class="arch-section">
+    <div class="section-wrap">
+        <div class="arch-card">
+            <div class="arch-left">
+                <div class="arch-avatar-wrap">
+                    <div class="arch-avatar"><i class="fas fa-user-astronaut"></i></div>
+                    <div class="arch-ring ar1"></div>
+                    <div class="arch-ring ar2"></div>
                 </div>
-                <h2 class="about-title">ABOUT THIS PROJECT</h2>
+                <span class="arch-lbl">The Architect</span>
             </div>
-            
-            <div class="about-content">
-                <div class="about-block">
-                    <h3 class="about-subtitle">
-                        <i class="fas fa-question-circle"></i>
-                        Why HireVoid?
-                    </h3>
-                    <p class="about-text">
-                        HireVoid was created to help job seekers across ALL professions navigate the complex hiring landscape with AI-powered insights. 
-                        Whether you're a software engineer, teacher, nurse, marketer, accountant, or any other professional,
-                        this platform leverages Groq AI to provide instant, actionable feedback on your resume, 
-                        helping you optimize your applications and increase your chances of landing your dream job.
-                    </p>
-                </div>
-                
-                <div class="about-block">
-                    <h3 class="about-subtitle">
-                        <i class="fas fa-rocket"></i>
-                        How to Use
-                    </h3>
-                    <div class="usage-steps">
-                        <div class="usage-step">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <h4>Choose Your Analysis Type</h4>
-                                <p>Select from Match Analysis, Job Search, Resume Review, or JD Analysis tabs</p>
-                            </div>
-                        </div>
-                        <div class="usage-step">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <h4>Enter Your Information</h4>
-                                <p>Upload your PDF resume or enter job details for any profession worldwide</p>
-                            </div>
-                        </div>
-                        <div class="usage-step">
-                            <div class="step-number">3</div>
-                            <div class="step-content">
-                                <h4>Get AI Insights</h4>
-                                <p>Receive detailed analysis, match scores, and personalized recommendations</p>
-                            </div>
-                        </div>
-                        <div class="usage-step">
-                            <div class="step-number">4</div>
-                            <div class="step-content">
-                                <h4>Take Action</h4>
-                                <p>Use the insights to improve your resume or find better-matching opportunities</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="about-features">
-                    <div class="feature-item">
-                        <i class="fas fa-globe"></i>
-                        <span>All Professions</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-brain"></i>
-                        <span>Powered by Groq AI</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Privacy Focused</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-bolt"></i>
-                        <span>Instant Results</span>
-                    </div>
-                </div>
+            <div class="arch-right">
+                <h2 class="arch-name">Viraj Vilas Jamdhade</h2>
+                <div class="arch-chips"><span><i class="fas fa-graduation-cap"></i> B.Tech CSE</span><span><i class="fas fa-calendar"></i> Class of 2028</span></div>
+                <p class="arch-bio">2nd-year Computer Science Engineering student with a deep passion for AI and web development. Building intelligent systems that bridge the gap between human potential and technological innovation.</p>
+                <div class="arch-stats"><div class="as-item"><i class="fas fa-code"></i><span>Developer</span></div><div class="as-item"><i class="fas fa-robot"></i><span>AI Enthusiast</span></div><div class="as-item"><i class="fas fa-rocket"></i><span>Builder</span></div></div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- The Architect Section -->
-    <section class="architect-section">
-        <div class="architect-card">
-            <div class="architect-header">
-                <div class="architect-avatar">
-                    <!-- Replace this with your actual photo -->
-                    <!-- <img src="Viraj-Image.jpg" alt="Viraj Jamdhade" class="architect-photo"> -->
-                    <i class="fas fa-user-astronaut"></i>
-                </div>
-                <div class="architect-title">
-                    <h3>THE ARCHITECT</h3>
-                    <div class="title-line"></div>
-                </div>
-            </div>
-            <div class="architect-content">
-                <h2 class="architect-name">Viraj Vilas Jamdhade</h2>
-                <div class="architect-badges">
-                    <span class="badge"><i class="fas fa-graduation-cap"></i> B.Tech CSE Student</span>
-                    <span class="badge"><i class="fas fa-calendar-alt"></i> Class of 2028</span>
-                </div>
-                <p class="architect-bio">
-                    2nd-year Computer Science Engineering student with a passion for AI and web development. 
-                    Building intelligent systems that bridge the gap between human potential and technological innovation.
-                </p>
-                <div class="architect-stats">
-                    <div class="stat">
-                        <i class="fas fa-code"></i>
-                        <span>Aspiring Developer</span>
-                    </div>
-                    <div class="stat">
-                        <i class="fas fa-robot"></i>
-                        <span>AI Enthusiast</span>
-                    </div>
-                    <div class="stat">
-                        <i class="fas fa-rocket"></i>
-                        <span>Innovation Driven</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Connect Section -->
-    <section class="connect-section">
+<!-- CONNECT -->
+<section class="connect-section">
+    <div class="section-wrap">
         <div class="connect-card">
-            <div class="connect-header">
-                <i class="fas fa-link"></i>
-                <h2>CONNECT WITH ME</h2>
-            </div>
-            <p class="connect-description">Let's collaborate and build something amazing together</p>
-            
-            <div class="social-links">
-                <a href="https://github.com/VirajsNexus" target="_blank" class="social-link github">
-                    <i class="fab fa-github"></i>
-                    <span>GitHub</span>
-                </a>
-                <a href="https://www.linkedin.com/in/viraj-jamdhade9420/" target="_blank" class="social-link linkedin">
-                    <i class="fab fa-linkedin"></i>
-                    <span>LinkedIn</span>
-                </a>
-                <a href="https://leetcode.com/u/Viraj_Jamdhade/" target="_blank" class="social-link leetcode">
-                    <i class="fas fa-code"></i>
-                    <span>LeetCode</span>
-                </a>
-                <a href="https://www.instagram.com/v_j_6953/" target="_blank" class="social-link instagram">
-                    <i class="fab fa-instagram"></i>
-                    <span>Instagram</span>
-                </a>
-                <a href="mailto:virajjamdhade6@gmail.com" class="social-link email">
-                    <i class="fas fa-envelope"></i>
-                    <span>Email</span>
-                </a>
+            <div class="cc-orbs"><div class="cc-orb cc1"></div><div class="cc-orb cc2"></div></div>
+            <span class="eyebrow-tag light-tag">Get in Touch</span>
+            <h2 class="sec-h2 light-h2">Connect with Viraj</h2>
+            <p class="sec-p light-p">Let's collaborate and build something amazing together</p>
+            <div class="social-row">
+                <a href="https://github.com/VirajsNexus" target="_blank" class="slink github"><i class="fab fa-github"></i><span>GitHub</span></a>
+                <a href="https://www.linkedin.com/in/viraj-jamdhade9420/" target="_blank" class="slink linkedin"><i class="fab fa-linkedin"></i><span>LinkedIn</span></a>
+                <a href="https://leetcode.com/u/Viraj_Jamdhade/" target="_blank" class="slink leetcode"><i class="fas fa-code"></i><span>LeetCode</span></a>
+                <a href="https://www.instagram.com/v_j_6953/" target="_blank" class="slink instagram"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+                <a href="mailto:virajjamdhade6@gmail.com" class="slink email"><i class="fas fa-envelope"></i><span>Email</span></a>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Footer -->
-    <footer class="cyber-footer">
-        <div class="footer-content">
-            <p>&copy; 2025 HireVoid. Powered by Groq AI. Built with <i class="fas fa-heart"></i> by Viraj Jamdhade</p>
-            <div class="footer-links">
-                <a href="https://github.com/VirajsNexus" target="_blank"><i class="fab fa-github"></i></a>
-                <a href="https://www.linkedin.com/in/viraj-jamdhade9420/" target="_blank"><i class="fab fa-linkedin"></i></a>
-                <a href="mailto:virajjamdhade6@gmail.com"><i class="fas fa-envelope"></i></a>
+<!-- FOOTER -->
+<footer class="site-footer">
+    <div class="footer-wrap">
+        <div class="ft-top">
+            <div class="ft-brand">
+                <div class="ft-logo"><div class="ft-mark"><i class="fas fa-brain"></i></div><div><span class="ft-name">HIRE<span class="brand-void">VOID</span></span><span class="ft-tag">AI Career Intelligence</span></div></div>
+                <p>Helping job seekers across all professions land better roles with AI-powered analysis.</p>
+            </div>
+            <div class="ft-cols">
+                <div class="ft-col"><h5>Tools</h5><ul><li><a href="#" onclick="launchTool('match');return false"><i class="fas fa-chart-bar"></i> Match Analysis</a></li><li><a href="#" onclick="launchTool('linkedin');return false"><i class="fab fa-linkedin"></i> Job Search</a></li><li><a href="#" onclick="launchTool('resume');return false"><i class="fas fa-file-alt"></i> Resume Review</a></li><li><a href="#" onclick="launchTool('jd');return false"><i class="fas fa-bullseye"></i> Analyze JD</a></li></ul></div>
+                <div class="ft-col"><h5>Stack</h5><ul><li><i class="fas fa-brain"></i> Groq AI</li><li><i class="fas fa-file-pdf"></i> PDF.js</li><li><i class="fab fa-python"></i> Python / Flask</li><li><i class="fab fa-js"></i> Vanilla JS</li></ul></div>
+                <div class="ft-col"><h5>Connect</h5><ul><li><a href="https://github.com/VirajsNexus" target="_blank"><i class="fab fa-github"></i> GitHub</a></li><li><a href="https://www.linkedin.com/in/viraj-jamdhade9420/" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a></li><li><a href="https://leetcode.com/u/Viraj_Jamdhade/" target="_blank"><i class="fas fa-code"></i> LeetCode</a></li><li><a href="mailto:virajjamdhade6@gmail.com"><i class="fas fa-envelope"></i> Email</a></li></ul></div>
             </div>
         </div>
-    </footer>
-
-</div>
+        <div class="ft-bottom"><p>&copy; 2025 HireVoid &mdash; Built with <i class="fas fa-heart"></i> by Viraj Jamdhade &middot; Powered by Groq AI</p><div class="fb-links"><a href="https://github.com/VirajsNexus" target="_blank"><i class="fab fa-github"></i></a><a href="https://www.linkedin.com/in/viraj-jamdhade9420/" target="_blank"><i class="fab fa-linkedin"></i></a><a href="mailto:virajjamdhade6@gmail.com"><i class="fas fa-envelope"></i></a></div></div>
+    </div>
+</footer>
 
 <script src="/static/script.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+// CANVAS PARTICLE NETWORK
+(function(){
+    const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');
+    let W,H,pts=[];
+    function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+    class Pt{
+        constructor(){this.reset();}
+        reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.25;this.vy=(Math.random()-.5)*.25;this.r=Math.random()*1.5+.5;this.a=Math.random()*.35+.1;this.c=Math.random()>.5?'56,189,248':'124,58,237';}
+        tick(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset();}
+        draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(${this.c},${this.a})`;ctx.fill();}
+    }
+    function init(){resize();pts=Array.from({length:70},()=>new Pt());}
+    function connect(){for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(124,58,237,${(1-d/130)*.1})`;ctx.lineWidth=.5;ctx.stroke();}}}
+    function frame(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.tick();p.draw();});connect();requestAnimationFrame(frame);}
+    window.addEventListener('resize',resize);
+    init();frame();
+})();
+
+// CURSOR GLOW
+document.addEventListener('mousemove',e=>{const g=document.getElementById('cursorGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px';});
+
+// SCROLL REVEAL
+setTimeout(()=>{document.querySelectorAll('.reveal-item').forEach(el=>el.classList.add('revealed'));},50);
+
+// NAV SCROLL
+window.addEventListener('scroll',()=>{document.getElementById('stickyNav').classList.toggle('nav-scrolled',scrollY>60);});
+
+// COUNT-UP
+function runCountUp(){
+    document.querySelectorAll('.lstat-num').forEach(el=>{
+        const target=parseFloat(el.dataset.target),dec=parseInt(el.dataset.dec)||0;
+        let cur=0;const step=target/50;
+        const iv=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(iv);}
+        el.textContent=dec>0?cur.toFixed(dec):Math.floor(cur);},25);
+    });
+}
+const statsObs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){runCountUp();statsObs.disconnect();}});},{threshold:.5});
+const se=document.querySelector('.land-stats');if(se)statsObs.observe(se);
+
+// SCROLL TO TOOLS
+function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});}
+function scrollToTools(){document.getElementById('toolChooser').scrollIntoView({behavior:'smooth',block:'start'});}
+
+// LAUNCH TOOL — hides chooser, shows workspace
+function launchTool(name){
+    const ch=document.getElementById('toolChooser'),ws=document.getElementById('workspace');
+    ch.style.transition='opacity .35s ease,transform .35s ease';
+    ch.style.opacity='0';ch.style.transform='translateY(-16px)';
+    setTimeout(()=>{
+        ch.style.display='none';
+        ws.style.display='block';ws.style.opacity='0';ws.style.transform='translateY(20px)';
+        ws.style.transition='';
+        document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.ws-tab').forEach(t=>t.classList.remove('active'));
+        const tab=document.getElementById(name+'-tab'),wtab=document.getElementById('wstab-'+name);
+        if(tab)tab.classList.add('active');
+        if(wtab)wtab.classList.add('active');
+        requestAnimationFrame(()=>{ws.style.transition='opacity .45s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1)';ws.style.opacity='1';ws.style.transform='translateY(0)';});
+        ws.scrollIntoView({behavior:'smooth',block:'start'});
+        document.querySelectorAll('.shortcut-pill').forEach((p,i)=>{p.classList.remove('active');if(['match','linkedin','resume','jd'][i]===name)p.classList.add('active');});
+    },300);
+}
+
+// BACK TO CHOOSER
+function backToChooser(){
+    const ch=document.getElementById('toolChooser'),ws=document.getElementById('workspace');
+    ws.style.transition='opacity .3s ease,transform .3s ease';
+    ws.style.opacity='0';ws.style.transform='translateY(16px)';
+    setTimeout(()=>{
+        ws.style.display='none';
+        ch.style.display='block';ch.style.opacity='0';ch.style.transform='translateY(-8px)';ch.style.transition='';
+        requestAnimationFrame(()=>{ch.style.transition='opacity .4s cubic-bezier(.22,1,.36,1),transform .4s cubic-bezier(.22,1,.36,1)';ch.style.opacity='1';ch.style.transform='translateY(0)';});
+        ch.scrollIntoView({behavior:'smooth',block:'start'});
+        document.querySelectorAll('.shortcut-pill').forEach(p=>p.classList.remove('active'));
+    },280);
+}
+
+// SWITCH TAB (from workspace tabs)
+window.switchTab=function(name,event){
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.ws-tab').forEach(t=>t.classList.remove('active'));
+    const tab=document.getElementById(name+'-tab'),wtab=document.getElementById('wstab-'+name);
+    if(tab){tab.classList.add('active');tab.style.animation='none';tab.offsetHeight;tab.style.animation='';}
+    if(wtab)wtab.classList.add('active');
+    document.querySelectorAll('.shortcut-pill').forEach((p,i)=>{p.classList.remove('active');if(['match','linkedin','resume','jd'][i]===name)p.classList.add('active');});
+};
+
+// TOOL CARD TILT
+document.querySelectorAll('.tc').forEach(card=>{
+    card.addEventListener('mousemove',e=>{const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;card.style.transform=`perspective(700px) rotateX(${-y*7}deg) rotateY(${x*7}deg) translateY(-5px)`;});
+    card.addEventListener('mouseleave',()=>{card.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';card.style.transform='';});
+    card.addEventListener('mouseenter',()=>{card.style.transition='transform .15s ease';});
+});
+
+// SCROLL PARALLAX for floating cards
+window.addEventListener('scroll',()=>{
+    const sy=scrollY;
+    const cards=document.querySelectorAll('.fcard');
+    if(cards[0])cards[0].style.transform=`translateY(${sy*.04}px)`;
+    if(cards[1])cards[1].style.transform=`translateY(${-sy*.025}px)`;
+    if(cards[2])cards[2].style.transform=`translateY(${sy*.035}px)`;
+});
+
+// HOW STEPS SCROLL REVEAL
+const stepObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('hs-in'),parseInt(e.target.dataset.d)||0);}});},{threshold:.3});
+document.querySelectorAll('.how-step').forEach((s,i)=>{s.dataset.d=i*120;stepObs.observe(s);});
+document.querySelectorAll('.feat-card').forEach((c,i)=>{c.style.setProperty('--fi',i);stepObs.observe(c);});
+</script>
 </body>
 </html>
