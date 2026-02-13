@@ -1,6 +1,43 @@
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
+// Global auth state
+let isAuthenticated = false;
+
+// Check authentication status on page load
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/user');
+        const data = await response.json();
+        isAuthenticated = data.authenticated;
+        return isAuthenticated;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        isAuthenticated = false;
+        return false;
+    }
+}
+
+// Initialize auth check
+checkAuthStatus();
+
+// Helper function to require login
+function requireLogin(action) {
+    if (!isAuthenticated) {
+        // Show login modal
+        const modal = document.getElementById('login-modal');
+        if (modal) {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Show notification
+        showNotification('Please sign in to use this feature', 'warning');
+        return false;
+    }
+    return true;
+}
+
 // ============================================
 // PDF TEXT EXTRACTION
 // ============================================
@@ -14,7 +51,7 @@ document.querySelectorAll('.pdf-upload').forEach(input => {
         if (file && file.type === "application/pdf") {
             targetArea.placeholder = "Extracting text from PDF... please wait.";
             if (uploadLabel) {
-                uploadLabel.querySelector('.upload-text').textContent = "Processing PDF...";
+                uploadLabel.querySelector('strong').textContent = "Processing PDF...";
             }
             
             const reader = new FileReader();
@@ -34,14 +71,14 @@ document.querySelectorAll('.pdf-upload').forEach(input => {
                     
                     targetArea.value = fullText.trim();
                     if (uploadLabel) {
-                        uploadLabel.querySelector('.upload-text').textContent = `✓ ${file.name}`;
+                        uploadLabel.querySelector('strong').textContent = `✓ ${file.name}`;
                         uploadLabel.style.borderColor = '#10b981';
                         uploadLabel.style.background = 'rgba(16, 185, 129, 0.05)';
                     }
                 } catch (err) {
                     alert("Error reading PDF: " + err.message);
                     if (uploadLabel) {
-                        uploadLabel.querySelector('.upload-text').textContent = "Drop PDF or click to upload";
+                        uploadLabel.querySelector('strong').textContent = "Drop PDF or click to upload";
                     }
                 }
             };
@@ -54,11 +91,9 @@ document.querySelectorAll('.pdf-upload').forEach(input => {
 // TAB SWITCHING
 // ============================================
 function switchTab(tabName, event) {
-    // Remove active class from all tabs and content
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     
-    // Add active class to selected tab and content
     document.getElementById(tabName + '-tab').classList.add('active');
     event.currentTarget.classList.add('active');
 }
@@ -70,24 +105,26 @@ function applyQuickFilter(filterType) {
     const roleInput = document.getElementById('job-role');
     const currentRole = roleInput.value.trim();
     
-    // If role is empty, just add the filter
     if (!currentRole) {
         roleInput.value = filterType;
     } else {
-        // Check if filter already exists
         if (!currentRole.toLowerCase().includes(filterType.toLowerCase())) {
             roleInput.value = `${currentRole} ${filterType}`;
         }
     }
     
-    // Visual feedback
     showNotification(`Filter "${filterType}" applied!`, "success");
 }
 
 // ============================================
-// MATCH ANALYSIS
+// MATCH ANALYSIS (LOGIN REQUIRED)
 // ============================================
 async function analyzeMatch() {
+    // Check authentication first
+    if (!requireLogin('analyze match')) {
+        return;
+    }
+
     const resume = document.getElementById('resume-match').value;
     const jd = document.getElementById('jd-match').value;
     const loader = document.getElementById('loading-match');
@@ -108,6 +145,13 @@ async function analyzeMatch() {
             body: JSON.stringify({ resume, jd })
         });
 
+        if (res.status === 401) {
+            // User is not authenticated
+            isAuthenticated = false;
+            requireLogin('analyze match');
+            return;
+        }
+
         if (!res.ok) throw new Error("Server responded with error");
         
         const data = await res.json();
@@ -115,14 +159,11 @@ async function analyzeMatch() {
         // Animate main score
         animateScore(data.score || 0);
         
-        // Update match score display
         document.getElementById('match-score').textContent = data.score || 0;
         
-        // Animate breakdown bars
         if (data.breakdown) {
             animateBreakdown(data.breakdown);
         } else {
-            // Fallback if no breakdown data
             const defaultBreakdown = {
                 skills: Math.max(0, (data.score || 0) - 10 + Math.random() * 20),
                 experience: Math.max(0, (data.score || 0) - 5 + Math.random() * 10),
@@ -131,22 +172,18 @@ async function analyzeMatch() {
             animateBreakdown(defaultBreakdown);
         }
         
-        // Update analysis text
         document.getElementById('analysis-text').textContent = data.summary || "";
         
-        // Matched skills
         const matchedSkills = document.getElementById('matched-skills');
         matchedSkills.innerHTML = (data.matchedSkills || [])
             .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Missing skills
         const missingSkills = document.getElementById('missing-skills');
         missingSkills.innerHTML = (data.missingSkills || [])
             .map((s, i) => `<span class="skill-tag skill-missing" style="animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Recommendations
         const recommendations = document.getElementById('recommendations');
         recommendations.innerHTML = (data.suggestions || [])
             .map((s, i) => `
@@ -157,7 +194,7 @@ async function analyzeMatch() {
             `).join('');
 
         resultDiv.classList.add('show');
-        showNotification("Analysis complete!", "success");
+        showNotification("Analysis complete! Results saved to your account.", "success");
         
     } catch (e) {
         showNotification("Analysis failed: " + e.message, "error");
@@ -167,9 +204,14 @@ async function analyzeMatch() {
 }
 
 // ============================================
-// RESUME REVIEW (matches HTML function name)
+// RESUME REVIEW (LOGIN REQUIRED)
 // ============================================
 async function reviewResume() {
+    // Check authentication first
+    if (!requireLogin('review resume')) {
+        return;
+    }
+
     const resume = document.getElementById('resume-review').value;
     const loader = document.getElementById('loading-resume');
     const resultDiv = document.getElementById('results-resume');
@@ -189,23 +231,26 @@ async function reviewResume() {
             body: JSON.stringify({ resume })
         });
 
+        if (res.status === 401) {
+            isAuthenticated = false;
+            requireLogin('review resume');
+            return;
+        }
+
         if (!res.ok) throw new Error("Server responded with error");
         
         const data = await res.json();
 
-        // Animate rating
         animateRating(data.rating || 0);
         
         document.getElementById('strengths-text').textContent = data.strengths || "";
         document.getElementById('improvements-text').textContent = data.improvements || "";
         
-        // Skills
         const skillsDiv = document.getElementById('resume-skills');
         skillsDiv.innerHTML = (data.skills || [])
             .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Suggestions
         const suggestions = document.getElementById('resume-suggestions');
         suggestions.innerHTML = (data.suggestions || [])
             .map((s, i) => `
@@ -216,7 +261,7 @@ async function reviewResume() {
             `).join('');
 
         resultDiv.classList.add('show');
-        showNotification("Resume analysis complete!", "success");
+        showNotification("Resume review complete! Saved to your account.", "success");
         
     } catch (e) {
         showNotification("Analysis failed: " + e.message, "error");
@@ -226,9 +271,14 @@ async function reviewResume() {
 }
 
 // ============================================
-// JOB DESCRIPTION ANALYSIS - FIXED VERSION
+// JOB DESCRIPTION ANALYSIS (LOGIN REQUIRED)
 // ============================================
 async function analyzeJD() {
+    // Check authentication first
+    if (!requireLogin('analyze job description')) {
+        return;
+    }
+
     const jd = document.getElementById('jd-analyze').value;
     const loader = document.getElementById('loading-jd');
     const resultDiv = document.getElementById('results-jd');
@@ -248,48 +298,46 @@ async function analyzeJD() {
             body: JSON.stringify({ jd })
         });
 
+        if (res.status === 401) {
+            isAuthenticated = false;
+            requireLogin('analyze job description');
+            return;
+        }
+
         if (!res.ok) throw new Error("Server responded with error");
         
         const data = await res.json();
 
-        // Overview
         document.getElementById('overview').innerHTML = `
             <h3 style="margin-bottom: 15px; font-size: 1.3rem;">📋 Role Overview</h3>
             <p style="line-height: 1.8;">${data.overview || ""}</p>
         `;
         
-        // Must-have skills
         const mustHaveSkills = document.getElementById('must-have-skills');
         const mustHaveArray = Array.isArray(data.mustHaveSkills) ? data.mustHaveSkills : [];
         mustHaveSkills.innerHTML = mustHaveArray
             .map((s, i) => `<span class="skill-tag skill-matched" style="animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Nice-to-have skills
         const niceToHaveSkills = document.getElementById('nice-to-have-skills');
         const niceToHaveArray = Array.isArray(data.niceToHaveSkills) ? data.niceToHaveSkills : [];
         niceToHaveSkills.innerHTML = niceToHaveArray
             .map((s, i) => `<span class="skill-tag" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; animation-delay: ${i * 0.1}s">${s}</span>`)
             .join('');
         
-        // Responsibilities - FIXED VERSION
         const responsibilities = document.getElementById('responsibilities');
         let responsibilitiesArray = [];
         
-        // Handle different data formats
         if (Array.isArray(data.responsibilities)) {
             responsibilitiesArray = data.responsibilities;
         } else if (typeof data.responsibilities === 'string') {
-            // If it's a string, split by newlines or bullet points
             responsibilitiesArray = data.responsibilities
                 .split(/\n|•|-/)
                 .filter(r => r.trim())
                 .map(r => ({ title: r.trim(), description: '', emoji: '📌' }));
         }
         
-        // Render responsibilities with proper error handling
         responsibilities.innerHTML = responsibilitiesArray.map((r, i) => {
-            // Handle both object and string formats
             const title = typeof r === 'object' ? (r.title || r.name || '') : r;
             const description = typeof r === 'object' ? (r.description || r.desc || '') : '';
             const emoji = typeof r === 'object' ? (r.emoji || '📌') : '📌';
@@ -305,7 +353,6 @@ async function analyzeJD() {
             `;
         }).join('');
         
-        // If no responsibilities found, show a message
         if (responsibilitiesArray.length === 0) {
             responsibilities.innerHTML = `
                 <div class="responsibility-card">
@@ -318,15 +365,12 @@ async function analyzeJD() {
             `;
         }
         
-        // Preparation tips - FIXED VERSION
         const prepTips = document.getElementById('preparation-tips');
         let prepTipsArray = [];
         
-        // Handle different data formats for preparation tips
         if (Array.isArray(data.preparationTips)) {
             prepTipsArray = data.preparationTips;
         } else if (typeof data.preparationTips === 'string') {
-            // If it's a string, create a single tip object
             prepTipsArray = [{ 
                 title: 'Preparation Tips', 
                 description: data.preparationTips,
@@ -347,7 +391,6 @@ async function analyzeJD() {
             `;
         }).join('');
         
-        // If no prep tips found, show a message
         if (prepTipsArray.length === 0) {
             prepTips.innerHTML = `
                 <div class="suggestion-card info">
@@ -358,7 +401,7 @@ async function analyzeJD() {
         }
 
         resultDiv.classList.add('show');
-        showNotification("JD analysis complete!", "success");
+        showNotification("JD analysis complete! Saved to your account.", "success");
         
     } catch (e) {
         console.error('JD Analysis Error:', e);
@@ -369,16 +412,19 @@ async function analyzeJD() {
 }
 
 // ============================================
-// LINKEDIN JOB SEARCH - WITH ROLE, LOCATION & EXPERIENCE LEVEL
+// LINKEDIN JOB SEARCH (LOGIN REQUIRED)
 // ============================================
 async function getLinkedInJobs() {
-    // Get job search parameters
+    // Check authentication first
+    if (!requireLogin('search jobs')) {
+        return;
+    }
+
     const jobRole = document.getElementById('job-role').value.trim();
     const location = document.getElementById('job-location').value.trim();
     const experienceLevel = document.getElementById('experience-level').value;
     const resumeText = document.getElementById('resume-linkedin').value.trim();
     
-    // Validate inputs
     if (!jobRole) {
         showNotification("Please enter a job role to search for", "warning");
         return;
@@ -407,14 +453,19 @@ async function getLinkedInJobs() {
             })
         });
 
+        if (res.status === 401) {
+            isAuthenticated = false;
+            requireLogin('search jobs');
+            return;
+        }
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch jobs");
 
-        // Display results
         displayLinkedInJobs(data, jobRole, location, experienceLevel);
         
         resultDiv.classList.add('show');
-        showNotification(`Found ${data.jobs.length} jobs!`, "success");
+        showNotification(`Found ${data.jobs.length} jobs! Saved to your account.`, "success");
 
     } catch (e) {
         console.error('LinkedIn jobs error:', e);
@@ -426,7 +477,6 @@ async function getLinkedInJobs() {
 
 // Display LinkedIn Jobs Results
 function displayLinkedInJobs(data, jobRole, location, experienceLevel) {
-    // Inject Summary
     const summaryEl = document.getElementById('linkedin-summary');
     
     let summaryHTML = `
@@ -462,7 +512,6 @@ function displayLinkedInJobs(data, jobRole, location, experienceLevel) {
     
     summaryEl.innerHTML = summaryHTML;
     
-    // Inject Jobs
     const jobsContainer = document.getElementById('jobs-container');
     
     if (!data.jobs || data.jobs.length === 0) {
@@ -474,7 +523,7 @@ function displayLinkedInJobs(data, jobRole, location, experienceLevel) {
                 <div class="search-tips">
                     <h4>Search Tips:</h4>
                     <ul>
-                        <li>Try broader job titles (e.g., "Developer" instead of "Senior React Developer")</li>
+                        <li>Try broader job titles</li>
                         <li>Search in major cities or use "Remote"</li>
                         <li>Try different experience levels</li>
                         <li>Check your spelling</li>
@@ -524,7 +573,7 @@ function animateScore(targetScore) {
     
     if (!scoreElement) return;
     
-    const circumference = 2 * Math.PI * 85; // radius = 85
+    const circumference = 2 * Math.PI * 85;
     
     if (progressCircle) {
         progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -532,7 +581,7 @@ function animateScore(targetScore) {
     }
     
     let currentScore = 0;
-    const increment = targetScore / 60; // 60 frames
+    const increment = targetScore / 60;
     
     const animation = setInterval(() => {
         currentScore += increment;
@@ -544,21 +593,15 @@ function animateScore(targetScore) {
         scoreElement.textContent = Math.round(currentScore);
         
         if (progressCircle) {
-            // Update circle progress
             const offset = circumference - (currentScore / 100) * circumference;
             progressCircle.style.strokeDashoffset = offset;
         }
-    }, 16); // ~60fps
+    }, 16);
 }
 
 function animateBreakdown(breakdown) {
-    // Animate Skills Match
     animateBar('skills-bar', 'skills-percentage', breakdown.skills || 0);
-    
-    // Animate Experience Fit
     animateBar('experience-bar', 'experience-percentage', breakdown.experience || 0);
-    
-    // Animate Keywords
     animateBar('keywords-bar', 'keywords-percentage', breakdown.keywords || 0);
 }
 
@@ -569,7 +612,7 @@ function animateBar(barId, percentageId, targetValue) {
     if (!bar || !percentageText) return;
     
     let currentValue = 0;
-    const increment = targetValue / 60; // 60 frames for smooth animation
+    const increment = targetValue / 60;
     
     const animation = setInterval(() => {
         currentValue += increment;
@@ -581,7 +624,7 @@ function animateBar(barId, percentageId, targetValue) {
         const roundedValue = Math.round(currentValue);
         bar.style.width = roundedValue + '%';
         percentageText.textContent = roundedValue + '%';
-    }, 16); // ~60fps
+    }, 16);
 }
 
 function animateRating(targetRating) {
@@ -606,7 +649,6 @@ function animateRating(targetRating) {
 // NOTIFICATION SYSTEM
 // ============================================
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existing = document.querySelector('.notification');
     if (existing) existing.remove();
     
@@ -656,4 +698,5 @@ document.head.appendChild(style);
 // INITIALIZE
 // ============================================
 console.log('%c🚀 HireVoid Initialized', 'color: #667eea; font-size: 16px; font-weight: bold;');
+console.log('%c🔒 Login Required for All Features', 'color: #f59e0b; font-size: 12px;');
 console.log('%cPowered by Groq AI', 'color: #764ba2; font-size: 12px;');
