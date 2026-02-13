@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HireVoid — AI Resume Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Authentication Styles -->
+    <link rel="stylesheet" href="/static/auth-styles.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -32,9 +36,61 @@
             <button class="shortcut-pill" onclick="launchTool('resume')"><i class="fas fa-file-alt"></i><span>Review</span></button>
             <button class="shortcut-pill" onclick="launchTool('jd')"><i class="fas fa-bullseye"></i><span>Analyze JD</span></button>
         </div>
+        
+        <!-- Updated Navigation Right Section with Auth -->
         <div class="nav-right">
             <div class="live-badge"><span class="live-dot"></span><span>Groq AI Live</span></div>
-            <button class="nav-cta" onclick="scrollToTools()">Get Started <i class="fas fa-arrow-right"></i></button>
+            
+            <!-- Login Button (shown when not authenticated) -->
+            <button class="nav-cta" id="nav-login-btn" style="display:flex">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Sign In</span>
+            </button>
+            
+            <!-- User Menu (shown when authenticated) -->
+            <div class="nav-user-menu" id="nav-user-menu" style="display:none">
+                <button class="user-menu-btn" id="user-menu-btn">
+                    <img src="" alt="User" id="user-avatar" class="user-avatar" style="display:none">
+                    <div class="user-avatar-placeholder" id="user-avatar-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="user-dropdown-header">
+                        <img src="" alt="User" id="user-avatar-dropdown" class="user-avatar-lg">
+                        <div class="user-info">
+                            <strong id="user-name">User Name</strong>
+                            <span id="user-email">user@example.com</span>
+                        </div>
+                    </div>
+                    
+                    <div class="user-dropdown-divider"></div>
+                    
+                    <div class="user-dropdown-menu">
+                        <a href="#" class="dropdown-item" onclick="viewHistory(); return false;">
+                            <i class="fas fa-history"></i>
+                            <span>View History</span>
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="viewProfile(); return false;">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="viewSettings(); return false;">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </div>
+                    
+                    <div class="user-dropdown-divider"></div>
+                    
+                    <button class="dropdown-item logout-item" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
@@ -373,6 +429,55 @@
     </div>
 </footer>
 
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-box login-modal">
+        <button class="close-modal"><i class="fas fa-times"></i></button>
+        
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2>Welcome to HireVoid</h2>
+            <p>Sign in to save your analyses and track your job search progress</p>
+        </div>
+
+        <div class="modal-body">
+            <div class="oauth-buttons">
+                <button class="oauth-btn google-btn" data-provider="google">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </button>
+                
+                <button class="oauth-btn github-btn" data-provider="github">
+                    <i class="fab fa-github"></i>
+                    <span>Continue with GitHub</span>
+                </button>
+                
+                <button class="oauth-btn linkedin-btn" data-provider="linkedin">
+                    <i class="fab fa-linkedin"></i>
+                    <span>Continue with LinkedIn</span>
+                </button>
+            </div>
+
+            <div class="login-benefits">
+                <h4><i class="fas fa-star"></i> Benefits of signing in:</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Save and access your resume analyses</li>
+                    <li><i class="fas fa-check-circle"></i> Track job applications and matches</li>
+                    <li><i class="fas fa-check-circle"></i> View analysis history</li>
+                    <li><i class="fas fa-check-circle"></i> Personalized recommendations</li>
+                </ul>
+            </div>
+
+            <div class="login-footer">
+                <p>By signing in, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and never shared.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Existing Scripts -->
 <script src="/static/script.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -420,7 +525,7 @@ const se=document.querySelector('.land-stats');if(se)statsObs.observe(se);
 function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});}
 function scrollToTools(){document.getElementById('toolChooser').scrollIntoView({behavior:'smooth',block:'start'});}
 
-// LAUNCH TOOL — hides chooser, shows workspace
+// LAUNCH TOOL
 function launchTool(name){
     const ch=document.getElementById('toolChooser'),ws=document.getElementById('workspace');
     ch.style.transition='opacity .35s ease,transform .35s ease';
@@ -454,7 +559,7 @@ function backToChooser(){
     },280);
 }
 
-// SWITCH TAB (from workspace tabs)
+// SWITCH TAB
 window.switchTab=function(name,event){
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
     document.querySelectorAll('.ws-tab').forEach(t=>t.classList.remove('active'));
@@ -471,7 +576,7 @@ document.querySelectorAll('.tc').forEach(card=>{
     card.addEventListener('mouseenter',()=>{card.style.transition='transform .15s ease';});
 });
 
-// SCROLL PARALLAX for floating cards
+// SCROLL PARALLAX
 window.addEventListener('scroll',()=>{
     const sy=scrollY;
     const cards=document.querySelectorAll('.fcard');
@@ -484,6 +589,28 @@ window.addEventListener('scroll',()=>{
 const stepObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('hs-in'),parseInt(e.target.dataset.d)||0);}});},{threshold:.3});
 document.querySelectorAll('.how-step').forEach((s,i)=>{s.dataset.d=i*120;stepObs.observe(s);});
 document.querySelectorAll('.feat-card').forEach((c,i)=>{c.style.setProperty('--fi',i);stepObs.observe(c);});
+
+// Placeholder functions for menu items (to be implemented)
+function viewHistory() {
+    console.log('View History clicked');
+    // TODO: Implement history view
+    alert('History feature coming soon!');
+}
+
+function viewProfile() {
+    console.log('View Profile clicked');
+    // TODO: Implement profile view
+    alert('Profile feature coming soon!');
+}
+
+function viewSettings() {
+    console.log('View Settings clicked');
+    // TODO: Implement settings
+    alert('Settings feature coming soon!');
+}
 </script>
+
+<!-- Authentication Script -->
+<script src="/static/auth.js"></script>
 </body>
 </html>
