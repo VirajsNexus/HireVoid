@@ -1,0 +1,101 @@
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-box login-modal">
+        <button class="close-modal"><i class="fas fa-times"></i></button>
+        
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2>Welcome to HireVoid</h2>
+            <p>Sign in to save your analyses and track your job search progress</p>
+        </div>
+
+        <div class="modal-body">
+            <div class="oauth-buttons">
+                <button class="oauth-btn google-btn" data-provider="google">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </button>
+                
+                <button class="oauth-btn github-btn" data-provider="github">
+                    <i class="fab fa-github"></i>
+                    <span>Continue with GitHub</span>
+                </button>
+                
+                <button class="oauth-btn linkedin-btn" data-provider="linkedin">
+                    <i class="fab fa-linkedin"></i>
+                    <span>Continue with LinkedIn</span>
+                </button>
+            </div>
+
+            <div class="login-benefits">
+                <h4><i class="fas fa-star"></i> Benefits of signing in:</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Save and access your resume analyses</li>
+                    <li><i class="fas fa-check-circle"></i> Track job applications and matches</li>
+                    <li><i class="fas fa-check-circle"></i> View analysis history</li>
+                    <li><i class="fas fa-check-circle"></i> Personalized recommendations</li>
+                </ul>
+            </div>
+
+            <div class="login-footer">
+                <p>By signing in, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and never shared.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- USER MENU (Add to navigation - replace the nav-cta button section) -->
+<!-- Use this in the .nav-right section -->
+<button class="nav-cta" id="nav-login-btn" style="display:none">
+    <i class="fas fa-sign-in-alt"></i>
+    <span>Sign In</span>
+</button>
+
+<div class="nav-user-menu" id="nav-user-menu" style="display:none">
+    <button class="user-menu-btn" id="user-menu-btn">
+        <img src="" alt="User" id="user-avatar" class="user-avatar" style="display:none">
+        <div class="user-avatar-placeholder" id="user-avatar-placeholder">
+            <i class="fas fa-user"></i>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    
+    <div class="user-dropdown" id="user-dropdown">
+        <div class="user-dropdown-header">
+            <img src="" alt="User" id="user-avatar-dropdown" class="user-avatar-lg">
+            <div class="user-info">
+                <strong id="user-name">User Name</strong>
+                <span id="user-email">user@example.com</span>
+            </div>
+        </div>
+        
+        <div class="user-dropdown-divider"></div>
+        
+        <div class="user-dropdown-menu">
+            <a href="#" class="dropdown-item" onclick="viewHistory(); return false;">
+                <i class="fas fa-history"></i>
+                <span>View History</span>
+            </a>
+            <a href="#" class="dropdown-item" onclick="viewProfile(); return false;">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" class="dropdown-item" onclick="viewSettings(); return false;">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+        
+        <div class="user-dropdown-divider"></div>
+        
+        <button class="dropdown-item logout-item" id="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sign Out</span>
+        </button>
+    </div>
+</div>
+
+<!-- Add this script tag before closing </body> -->
+<script src="/static/auth.js"></script>
